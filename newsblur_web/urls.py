@@ -2,12 +2,15 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth.views import LogoutView
+from django.contrib.sitemaps.views import sitemap
 from django.urls import include, re_path
+from django.views.generic import RedirectView
 
 from apps.profile import views as profile_views
 from apps.reader import views as reader_views
 from apps.social import views as social_views
 from apps.static import views as static_views
+from apps.static.sitemaps import StaticSitemap
 
 admin.autodiscover()
 
@@ -26,13 +29,14 @@ urlpatterns = [
     re_path(r"^read/?", reader_views.index),
     re_path(r"^trending/?", reader_views.index),
     re_path(r"^archive/?$", reader_views.index),
+    re_path(r"^briefing-admin/?$", reader_views.index),
     re_path(r"^briefing/?$", reader_views.index),
-    re_path(r"^briefing/(?!stories|preferences|status|generate)", reader_views.index),
+    re_path(r"^briefing/(?!stories|preferences|status|generate|admin)", reader_views.index),
     re_path(r"^social/\d+/.*?", reader_views.index),
     re_path(r"^user/.*?", reader_views.index),
     re_path(r"^null/.*?", reader_views.index),
     re_path(r"^story/.*?", reader_views.index),
-    re_path(r"^feed/?$", social_views.shared_stories_rss_feed_noid),
+    re_path(r"^feed/?", social_views.shared_stories_rss_feed_noid),
     re_path(r"^rss_feeds/", include("apps.rss_feeds.urls")),
     re_path(r"^discover/", include("apps.discover.urls")),
     re_path(r"^analyzer/", include("apps.analyzer.urls")),
@@ -62,6 +66,39 @@ urlpatterns = [
     re_path(r"^_dbcheck/redis", static_views.redis_check),
     re_path(r"^_dbcheck/elasticsearch", static_views.elasticsearch_check),
     re_path(r"^admin/", admin.site.urls),
+    re_path(r"^pricing/?$", static_views.pricing, name="pricing"),
+    re_path(r"^pricing/premium/?$", static_views.pricing_premium, name="pricing-premium"),
+    re_path(r"^pricing/archive/?$", static_views.pricing_archive, name="pricing-archive"),
+    re_path(r"^pricing/pro/?$", static_views.pricing_pro, name="pricing-pro"),
+    re_path(r"^features/?$", static_views.features, name="features"),
+    re_path(
+        r"^features/intelligence-training/?$",
+        static_views.feature_intelligence_training,
+        name="feature-intelligence-training",
+    ),
+    re_path(r"^features/ask-ai/?$", static_views.feature_ask_ai, name="feature-ask-ai"),
+    re_path(r"^features/web-feeds/?$", static_views.feature_web_feeds, name="feature-web-feeds"),
+    re_path(r"^features/newsletters/?$", static_views.feature_newsletters, name="feature-newsletters"),
+    re_path(r"^features/search/?$", static_views.feature_search, name="feature-search"),
+    re_path(r"^features/archive/?$", static_views.feature_archive, name="feature-archive"),
+    re_path(r"^features/saved-stories/?$", static_views.feature_saved_stories, name="feature-saved-stories"),
+    re_path(r"^features/native-apps/?$", static_views.feature_native_apps, name="feature-native-apps"),
+    re_path(r"^compare/feedly/?", static_views.compare_feedly, name="compare-feedly"),
+    re_path(r"^compare/inoreader/?", static_views.compare_inoreader, name="compare-inoreader"),
+    re_path(r"^compare/readwise-reader/?", static_views.compare_readwise, name="compare-readwise"),
+    re_path(r"^compare/the-old-reader/?", static_views.compare_the_old_reader, name="compare-the-old-reader"),
+    re_path(r"^alternative/open-source-rss-reader/?", static_views.alt_open_source, name="alt-open-source"),
+    re_path(r"^alternative/self-hosted-rss-reader/?", static_views.alt_self_hosted, name="alt-self-hosted"),
+    re_path(r"^alternative/google-reader/?", static_views.alt_google_reader, name="alt-google-reader"),
+    re_path(r"^alternative/feedly/?", static_views.alt_feedly, name="alt-feedly"),
+    re_path(r"^alternative/inoreader/?", static_views.alt_inoreader, name="alt-inoreader"),
+    re_path(r"^compare/feedbin/?", static_views.compare_feedbin, name="compare-feedbin"),
+    re_path(
+        r"^sitemap\.xml$",
+        sitemap,
+        {"sitemaps": {"static": StaticSitemap}},
+        name="django.contrib.sitemaps.views.sitemap",
+    ),
     re_path(r"^about/?", static_views.about, name="about"),
     re_path(r"^faq/?", static_views.faq, name="faq"),
     re_path(r"^api/?$", static_views.api, name="api"),
@@ -94,6 +131,9 @@ urlpatterns = [
     re_path(r"^android/?", static_views.android, name="android-static"),
     re_path(r"^firefox/?", static_views.firefox, name="firefox"),
     re_path(r"zebra/", include("zebra.urls", namespace="zebra")),
+    re_path(r"^login/?$", RedirectView.as_view(pattern_name="login", permanent=True)),
+    re_path(r"^signup/?$", RedirectView.as_view(pattern_name="signup", permanent=True)),
+    re_path(r"^forgot-password/?$", RedirectView.as_view(pattern_name="profile-forgot-password", permanent=True)),
     re_path(r"^account/redeem_code/?$", profile_views.redeem_code, name="redeem-code"),
     re_path(r"^account/login/?$", profile_views.login, name="login"),
     re_path(r"^account/signup/?$", profile_views.signup, name="signup"),

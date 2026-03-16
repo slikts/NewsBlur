@@ -49,6 +49,7 @@
                 $river_blurblogs_header: $('.NB-feeds-header-river-blurblogs'),
                 $river_global_header: $('.NB-feeds-header-river-global'),
                 $river_briefing_header: $('.NB-feeds-header-river-briefing'),
+                $river_briefing_admin_header: $('.NB-feeds-header-river-briefing-admin'),
                 $archive_header: $('.NB-feeds-header-archive'),
                 $add_site_header: $('.NB-feeds-header-add-site'),
                 $starred_header: $('.NB-feeds-header-starred'),
@@ -1399,6 +1400,7 @@
                 'social_view': false,
                 'starred_view': false,
                 'briefing_view': false,
+                'briefing_admin_view': false,
                 'briefing_section': null,
                 'select_story_in_feed': null,
                 'global_blurblogs': false,
@@ -1450,6 +1452,7 @@
             this.$s.$river_blurblogs_header.removeClass('NB-selected');
             this.$s.$river_global_header.removeClass('NB-selected');
             this.$s.$river_briefing_header.removeClass('NB-selected');
+            this.$s.$river_briefing_admin_header.removeClass('NB-selected');
             this.$s.$archive_header.removeClass('NB-selected');
             if (!options.preserve_tryfeed) {
                 this.$s.$tryfeed_header.removeClass('NB-selected');
@@ -2221,7 +2224,7 @@
                 NEWSBLUR.app.story_titles.show_loading(options);
             }
 
-            this.model.fetch_briefing_stories(
+            this.model.fetch_briefing_stories(1,
                 _.bind(this.post_open_daily_briefing, this),
                 NEWSBLUR.app.taskbar_info.show_stories_error
             );
@@ -2231,17 +2234,27 @@
             if (!this.flags['briefing_view']) return;
 
             this.flags['opening_feed'] = false;
+            this.flags['briefing_loading_page'] = false;
 
-            // reader.js: Store briefing data for the story titles view to render
-            NEWSBLUR.assets.briefing_data = data;
+            var is_append = data.page > 1;
+
+            if (is_append) {
+                // reader.js: Append new briefings to existing data for infinite scroll
+                NEWSBLUR.assets.briefing_data.briefings = (NEWSBLUR.assets.briefing_data.briefings || []).concat(data.briefings || []);
+                NEWSBLUR.assets.briefing_data.has_next_page = data.has_next_page;
+                NEWSBLUR.assets.briefing_data.page = data.page;
+            } else {
+                // reader.js: Store briefing data for the story titles view to render
+                NEWSBLUR.assets.briefing_data = data;
+            }
 
             // reader.js: Build aggregate section counts from all briefings' curated_sections
             // and include sections that only exist in section_summaries (meta sections
             // like quick_catchup that reference stories from other sections).
-            var section_definitions = data.section_definitions || {};
+            var all_briefings = NEWSBLUR.assets.briefing_data.briefings || [];
+            var section_definitions = NEWSBLUR.assets.briefing_data.section_definitions || {};
             var aggregate_sections = {};
-            var briefings = data.briefings || [];
-            _.each(briefings, function (briefing) {
+            _.each(all_briefings, function (briefing) {
                 var sections = briefing.curated_sections || {};
                 _.each(sections, function (hashes, key) {
                     if (!aggregate_sections[key]) {
@@ -2263,7 +2276,7 @@
             // matches the order sections appear in the summary.
             var section_models = [];
             var added_keys = {};
-            var latest_briefing = briefings[0];
+            var latest_briefing = all_briefings[0];
             if (latest_briefing && latest_briefing.section_summaries) {
                 _.each(_.keys(latest_briefing.section_summaries), function (key) {
                     if (key in aggregate_sections) {
@@ -2302,7 +2315,7 @@
                 }
             }
 
-            if (!data.enabled && !briefings.length) {
+            if (!data.enabled && !all_briefings.length) {
                 // reader.js: Show full-pane onboarding for users who haven't opted in
                 if (this.briefing_onboarding_view) {
                     this.briefing_onboarding_view.close();
@@ -2314,7 +2327,11 @@
             } else {
                 // reader.js: Re-render story titles for normal briefing view
                 if (NEWSBLUR.app.story_titles) {
-                    NEWSBLUR.app.story_titles.render();
+                    if (is_append) {
+                        NEWSBLUR.app.story_titles.append_briefing_page(data.briefings || []);
+                    } else {
+                        NEWSBLUR.app.story_titles.render();
+                    }
                 }
             }
 
@@ -2331,6 +2348,122 @@
                     }, 100);
                 }
             }
+        },
+
+        load_next_briefing_page: function () {
+            if (!this.flags.briefing_view) return;
+            if (this.flags.briefing_loading_page) return;
+            var briefing_data = NEWSBLUR.assets.briefing_data;
+            if (!briefing_data || !briefing_data.has_next_page) return;
+
+            var next_page = (briefing_data.page || 1) + 1;
+            this.flags.briefing_loading_page = true;
+
+            if (NEWSBLUR.app.story_titles) {
+                NEWSBLUR.app.story_titles.show_briefing_loading();
+            }
+
+            this.model.fetch_briefing_stories(next_page,
+                _.bind(this.post_open_daily_briefing, this),
+                _.bind(function () {
+                    this.flags.briefing_loading_page = false;
+                    if (NEWSBLUR.app.story_titles) {
+                        NEWSBLUR.app.story_titles.hide_briefing_loading();
+                    }
+                    NEWSBLUR.app.taskbar_info.show_stories_error.apply(
+                        NEWSBLUR.app.taskbar_info, arguments
+                    );
+                }, this)
+            );
+        },
+
+        // ==================
+        // = Briefing Admin =
+        // ==================
+
+        open_briefing_admin: function (options) {
+            options = options || {};
+            var self = this;
+
+            this.reset_feed(options);
+            this.hide_splash_page();
+
+            this.active_feed = 'river:briefing-admin';
+            this.iframe_scroll = null;
+            this.$s.$layout.addClass('NB-view-river');
+            this.flags.river_view = true;
+            this.flags.briefing_admin_view = true;
+
+            this.$s.$river_briefing_admin_header.addClass('NB-selected');
+
+            if (!options.silent) {
+                var url = "/briefing-admin";
+                if (window.location.pathname != url) {
+                    NEWSBLUR.router.navigate(url);
+                }
+            }
+
+            this.flags['opening_feed'] = true;
+
+            $('.task_view_page', this.$s.$taskbar).addClass('NB-disabled');
+            var explicit_view_setting = this.model.view_setting(this.active_feed, 'view');
+            if (!explicit_view_setting || explicit_view_setting == 'page') {
+                explicit_view_setting = 'feed';
+            }
+            this.set_correct_story_view_for_feed(this.active_feed, explicit_view_setting);
+            this.switch_taskbar_view(this.story_view);
+            this.switch_story_layout();
+            this.setup_mousemove_on_views();
+            this.make_feed_title_in_stories();
+
+            if (NEWSBLUR.assets.view_setting(NEWSBLUR.reader.active_feed, 'layout') == 'full') {
+                NEWSBLUR.app.story_list.show_loading(options);
+            } else {
+                NEWSBLUR.app.story_titles.show_loading(options);
+            }
+
+            this.model.fetch_briefing_admin(1,
+                _.bind(this.post_open_briefing_admin, this),
+                NEWSBLUR.app.taskbar_info.show_stories_error
+            );
+        },
+
+        post_open_briefing_admin: function (data) {
+            if (!this.flags['briefing_admin_view']) return;
+
+            this.flags['opening_feed'] = false;
+
+            NEWSBLUR.assets.briefing_admin_data = data;
+            NEWSBLUR.assets.briefing_admin_page = data.page;
+
+            // reader.js: Convert briefing admin entries into story objects so the
+            // normal story titles + story detail split view renders them.
+            var stories = _.map(data.briefing_admin_entries || [], function (entry) {
+                var username = (entry.user_profile && entry.user_profile.username) || 'Unknown';
+                return {
+                    story_hash: 'briefing-admin:' + entry.briefing_id,
+                    story_title: username + ' — ' + (entry.summary_story_title || 'Briefing'),
+                    story_content: entry.summary_html || '',
+                    story_date: entry.briefing_date || new Date().toISOString(),
+                    story_timestamp: entry.briefing_date ? String(Math.floor(new Date(entry.briefing_date).getTime() / 1000)) : '0',
+                    story_authors: username,
+                    story_permalink: '',
+                    story_feed_id: 0,
+                    story_tags: [entry.frequency || 'daily'],
+                    image_urls: [],
+                    id: 'briefing-admin:' + entry.briefing_id,
+                    read_status: 1,
+                    briefing_admin_user_profile: entry.user_profile,
+                    briefing_admin_curated_count: entry.curated_story_count
+                };
+            });
+
+            if (stories.length) {
+                NEWSBLUR.assets.stories.reset(stories, { added: stories.length });
+            }
+            NEWSBLUR.assets.stories.no_more_stories = !data.has_next_page;
+
+            this.flags['story_titles_loaded'] = true;
         },
 
         generate_daily_briefing: function (callback) {
@@ -2378,7 +2511,7 @@
                 this.briefing_onboarding_view = null;
             }
             if (this.flags.briefing_view) {
-                this.model.fetch_briefing_stories(
+                this.model.fetch_briefing_stories(1,
                     _.bind(this.post_open_daily_briefing, this),
                     NEWSBLUR.app.taskbar_info.show_stories_error
                 );
@@ -3658,6 +3791,8 @@
                 feed_title = "Infrequent Site Stories";
             } else if (feed_id == 'river:daily-briefing') {
                 feed_title = "Daily Briefing";
+            } else if (feed_id == 'river:briefing-admin') {
+                feed_title = "Briefing Admin";
             } else if (_.string.startsWith(feed_id, 'river:')) {
                 var feed = NEWSBLUR.assets.get_feed(feed_id);
                 if (!feed) return;
@@ -8320,7 +8455,7 @@
                 e.preventDefault();
                 var story_id = $t.closest('.NB-menu-manage').data('story_id');
                 var story = self.model.get_story(story_id);
-                NEWSBLUR.assets.stories.mark_read(story);
+                NEWSBLUR.assets.stories.mark_read(story, { skip_delay: true });
             });
 
             $.targetIs(e, { tagSelector: '.task_view_page:not(.NB-task-return)' }, function ($t, $p) {

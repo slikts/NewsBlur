@@ -31,7 +31,7 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
         "keypress .NB-add-site-youtube-search": "handle_youtube_search_keypress",
         // Reddit tab events
         "input .NB-add-site-reddit-search": "handle_reddit_search_input",
-        "click .NB-add-site-reddit-tab .NB-add-site-tab-search-btn": "perform_reddit_search",
+        "click .NB-add-site-reddit-tab .NB-add-site-tab-search-btn": "perform_reddit_combined_search",
         "keypress .NB-add-site-reddit-search": "handle_reddit_search_keypress",
         // Newsletter tab events
         "input .NB-add-site-newsletters-search": "handle_newsletter_search_input",
@@ -59,6 +59,7 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
         "keypress .NB-add-site-google-news-folder-name": "handle_google_news_folder_keypress",
         // Trending tab events
         "change .NB-add-site-trending-days": "handle_trending_days_change",
+        "click .NB-add-site-trending-pill": "handle_trending_category_change",
         // Categories tab events
         "click .NB-add-site-category-card": "handle_category_click",
         "click .NB-add-site-category-back": "go_back_to_categories",
@@ -69,6 +70,7 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
         "click .NB-add-site-webfeed-hint-btn": "perform_webfeed_refine",
         "keypress .NB-add-site-webfeed-hint-input": "handle_webfeed_hint_keypress",
         "click .NB-add-site-webfeed-subscribe-btn": "subscribe_webfeed",
+        "click .NB-add-site-webfeed-archive-banner": "open_webfeed_upgrade_modal",
         "input .NB-add-site-webfeed-staleness-slider": "update_webfeed_staleness",
         "change .NB-add-site-webfeed-unread-radio": "toggle_webfeed_unread",
         // Note: scroll events don't bubble, so infinite scroll is bound directly
@@ -277,6 +279,7 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
         this.search_debounced = _.debounce(_.bind(this.perform_search, this), 300);
         this.newsletter_search_debounced = _.debounce(_.bind(this.perform_newsletter_search, this), 300);
         this.reddit_search_debounced = _.debounce(_.bind(this.perform_reddit_popular_search, this), 300);
+        this.reddit_api_search_debounced = _.debounce(_.bind(this.perform_reddit_api_search, this), 500);
         this.podcast_search_debounced = _.debounce(_.bind(this.perform_podcast_popular_search, this), 300);
         this.youtube_search_debounced = _.debounce(_.bind(this.perform_youtube_popular_search, this), 300);
         this.popular_search_debounced = _.debounce(_.bind(this.perform_popular_search, this), 300);
@@ -335,6 +338,7 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
             trending_loaded: false,
             trending_page: 1,
             trending_days: 7,
+            trending_category: 'popular',
             trending_has_more: true,
             trending_is_loading: false,
         });
@@ -355,6 +359,8 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
         this.reddit_state = _.extend({}, default_search_state, default_popular_state, {
             popular_subreddits: [],
             popular_loaded: false,
+            api_results: [],
+            api_loading: false,
             selected_category: 'all',
             selected_subcategory: 'all'
         });
@@ -711,6 +717,24 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
         var $container = $.make('div', { className: 'NB-add-site-discover-container' });
 
         // Trending Sites Section
+        var trending_categories = [
+            { id: 'popular', label: 'Popular', description: 'Most subscribed-to feeds this week' },
+            { id: 'rising', label: 'Rising', description: 'Small feeds with the fastest-growing subscriber base' },
+            { id: 'hidden_gems', label: 'Hidden Gems', description: 'Feeds with deeply engaged readers, not yet widely known' },
+            { id: 'new_arrivals', label: 'New Arrivals', description: 'Recently added feeds that are gaining subscribers' }
+        ];
+        var $trending_pills = $.make('div', { className: 'NB-add-site-trending-pills' },
+            _.map(trending_categories, function (cat) {
+                var active = (cat.id === state.trending_category) ? ' NB-active' : '';
+                return $.make('div', {
+                    className: 'NB-add-site-trending-pill' + active,
+                    'data-category': cat.id
+                }, cat.label);
+            })
+        );
+        var active_cat = _.find(trending_categories, function (c) { return c.id === state.trending_category; });
+        var $trending_description = $.make('div', { className: 'NB-add-site-trending-description' }, active_cat.description);
+
         var $trending_section = $.make('div', { className: 'NB-add-site-section NB-add-site-trending-section' }, [
             $.make('div', { className: 'NB-add-site-section-header' }, [
                 $.make('div', { className: 'NB-add-site-section-title' }, [
@@ -723,6 +747,8 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
                     $.make('option', { value: '30', selected: state.trending_days === 30 }, 'This Month')
                 ])
             ]),
+            $trending_pills,
+            $trending_description,
             $.make('div', { className: 'NB-add-site-section-content NB-add-site-trending-content' })
         ]);
 
@@ -770,7 +796,7 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
         state.trending_is_loading = true;
 
         state.trending_feeds_collection.fetch({
-            data: { page: state.trending_page, days: state.trending_days },
+            data: { page: state.trending_page, days: state.trending_days, category: state.trending_category },
             remove: !append,  // Don't remove existing models when appending
             success: function () {
                 state.trending_loaded = true;
@@ -1869,11 +1895,7 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
 
         this.bind_scroll_handler();
 
-        if (state.results.length > 0) {
-            this.render_reddit_results();
-        } else {
-            this.render_reddit_popular();
-        }
+        this.render_reddit_popular();
     },
 
     render_reddit_results: function () {
@@ -1892,7 +1914,76 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
             $grid.append(this.render_reddit_card(subreddit));
         }, this);
 
+        // Append direct-subscribe card below results
+        if (state.query) {
+            $grid.append(this.render_reddit_direct_add_card(state.query, state.results.length === 0));
+        }
+
         $results.html($grid);
+    },
+
+    render_reddit_direct_add_card: function (query, no_results) {
+        // Clean up query: strip r/ prefix, trim, remove spaces
+        var name = query.replace(/^\/?r\//, '').trim().replace(/\s+/g, '');
+        if (!name) return '';
+
+        var feed_url = 'https://www.reddit.com/r/' + name + '/.rss';
+
+        // Check if already subscribed
+        var existing_feed = NEWSBLUR.assets.feeds.find(function (feed) {
+            return feed.get('feed_address') === feed_url;
+        });
+        var subscribed = !!existing_feed;
+        var feed_id = existing_feed ? existing_feed.id : null;
+
+        var description = no_results
+            ? 'No results found, but you can subscribe directly if you know the subreddit name.'
+            : "Don't see your subreddit? Subscribe directly by name.";
+
+        var $actions;
+        if (subscribed) {
+            $actions = $.make('div', { className: 'NB-add-site-card-actions NB-add-site-card-actions-subscribed' }, [
+                $.make('div', { className: 'NB-subscribed-badge' }, [
+                    $.make('span', { className: 'NB-subscribed-badge-check' }, '\u2713'),
+                    ' Subscribed'
+                ]),
+                $.make('div', { className: 'NB-add-site-card-actions-row' }, [
+                    $.make('div', {
+                        className: 'NB-add-site-open-btn NB-modal-submit-button NB-modal-submit-green',
+                        'data-feed-id': feed_id
+                    }, 'Open')
+                ])
+            ]);
+        } else {
+            $actions = $.make('div', { className: 'NB-add-site-card-actions' }, [
+                $.make('div', { className: 'NB-add-site-card-add-group' }, [
+                    this.make_folder_selector(),
+                    $.make('div', {
+                        className: 'NB-add-site-subscribe-btn NB-modal-submit-button NB-modal-submit-grey',
+                        'data-feed-url': feed_url
+                    }, 'Add')
+                ])
+            ]);
+        }
+
+        return $.make('div', {
+            className: 'NB-add-site-card NB-add-site-reddit-direct-card' + (subscribed ? ' NB-add-site-card-subscribed' : ''),
+            'data-feed-url': feed_url,
+            'data-feed-id': feed_id
+        }, [
+            $.make('div', { className: 'NB-add-site-card-header' }, [
+                $.make('img', {
+                    src: '/media/img/icons/phosphor-fill/reddit-logo-fill.svg',
+                    className: 'NB-add-site-card-icon'
+                }),
+                $.make('div', { className: 'NB-add-site-card-info' }, [
+                    $.make('div', { className: 'NB-add-site-card-title' }, 'Subscribe to r/' + name),
+                    $.make('div', { className: 'NB-add-site-card-meta' }, feed_url)
+                ])
+            ]),
+            $.make('div', { className: 'NB-add-site-card-desc' }, description),
+            $actions
+        ]);
     },
 
     render_reddit_popular: function () {
@@ -1965,6 +2056,60 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
         }
 
         $content.html($grid);
+
+        // Prepend direct-add card and append API results if searching
+        if (state.query) {
+            var $results = this.$('.NB-add-site-reddit-tab .NB-add-site-source-results');
+            $results.find('.NB-add-site-reddit-direct-card').remove();
+            var no_results = !subreddits || subreddits.length === 0;
+            $results.prepend(this.render_reddit_direct_add_card(state.query, no_results));
+
+            if (state.api_results.length > 0) {
+                this.render_reddit_api_results();
+            }
+        }
+    },
+
+    render_reddit_api_results: function () {
+        var self = this;
+        var state = this.reddit_state;
+        var $results = this.$('.NB-add-site-reddit-tab .NB-add-site-source-results');
+
+        // Remove any previous API results section and direct-add card
+        $results.find('.NB-add-site-reddit-api-section').remove();
+        $results.find('.NB-add-site-reddit-direct-card').remove();
+
+        if (!state.query) return;
+
+        // Collect feed_urls already shown in popular feeds for deduplication
+        var shown_urls = {};
+        $results.find('.NB-add-site-reddit-card').each(function () {
+            var url = $(this).data('feed-url');
+            if (url) shown_urls[url] = true;
+        });
+
+        // Filter API results to only show new ones
+        var new_results = _.filter(state.api_results, function (r) {
+            return !shown_urls[r.feed_url];
+        });
+
+        if (new_results.length > 0) {
+            var $section = $.make('div', { className: 'NB-add-site-reddit-api-section' }, [
+                $.make('div', { className: 'NB-add-site-reddit-api-header' }, 'More from Reddit')
+            ]);
+            var $grid = this.make_results_container();
+            _.each(new_results, function (subreddit) {
+                $grid.append(self.render_reddit_card(subreddit));
+            });
+            $section.append($grid);
+            $results.append($section);
+        }
+
+        // Prepend direct-add card at the top
+        if (state.query) {
+            var no_results = (!state.popular_feeds || state.popular_feeds.length === 0) && new_results.length === 0;
+            $results.prepend(this.render_reddit_direct_add_card(state.query, no_results));
+        }
     },
 
     fetch_reddit_popular: function () {
@@ -2767,7 +2912,7 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
             $.make('div', { className: 'NB-add-site-webfeed-options' }, [
                 $.make('div', { className: 'NB-add-site-webfeed-option' }, [
                     $.make('label', { className: 'NB-add-site-webfeed-option-label' },
-                        'Alert after ' + state.staleness_days + ' days without new stories'),
+                        'Alert after ' + state.staleness_days + (state.staleness_days === 1 ? ' day' : ' days') + ' without new stories'),
                     $.make('input', {
                         type: 'range',
                         className: 'NB-add-site-webfeed-staleness-slider',
@@ -2824,8 +2969,24 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
                     ])
                 ])
             ]),
+            !NEWSBLUR.Globals.is_archive ? $.make('div', { className: 'NB-add-site-webfeed-archive-banner' }, [
+                $.make('div', { className: 'NB-add-site-webfeed-archive-banner-content' }, [
+                    $.make('div', { className: 'NB-add-site-webfeed-archive-banner-icon' }),
+                    $.make('div', { className: 'NB-add-site-webfeed-archive-banner-text' }, [
+                        $.make('div', { className: 'NB-add-site-webfeed-archive-banner-title' }, [
+                            'Web Feeds',
+                            $.make('span', { className: 'NB-archive-badge' }, 'Premium Archive')
+                        ]),
+                        $.make('div', { className: 'NB-add-site-webfeed-archive-banner-body' },
+                            'Subscribe to any website as a feed, even without RSS. Upgrade to Premium Archive to unlock Web Feeds.')
+                    ])
+                ]),
+                $.make('div', { className: 'NB-add-site-webfeed-archive-banner-cta' },
+                    'Upgrade to Premium Archive')
+            ]) : null,
             $.make('div', {
-                className: 'NB-add-site-webfeed-subscribe-btn NB-modal-submit-button NB-modal-submit-green'
+                className: 'NB-add-site-webfeed-subscribe-btn NB-modal-submit-button NB-modal-submit-green' +
+                    (!NEWSBLUR.Globals.is_archive ? ' NB-disabled' : '')
             }, 'Subscribe to ' + page_title)
         ]);
 
@@ -3048,13 +3209,21 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
         $subscribe.removeClass('NB-hidden');
         this.$('.NB-add-site-webfeed-feed-badge-pattern').text(
             'Pattern: ' + (variant ? variant.label || '' : ''));
+
+        // Scroll subscribe section into view
+        setTimeout(_.bind(function () {
+            var $scrollable = this.$('.NB-add-site-webfeed-content');
+            if ($scrollable.length && $subscribe.length) {
+                $scrollable.animate({ scrollTop: $scrollable[0].scrollHeight }, 2000, 'swing');
+            }
+        }, this), 50);
     },
 
     update_webfeed_staleness: function (e) {
         var value = parseInt($(e.target).val(), 10);
         this.webfeed_state.staleness_days = value;
         $(e.target).closest('.NB-add-site-webfeed-option').find('.NB-add-site-webfeed-option-label').text(
-            'Alert after ' + value + ' days without new stories'
+            'Alert after ' + value + (value === 1 ? ' day' : ' days') + ' without new stories'
         );
     },
 
@@ -3062,6 +3231,12 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
         this.webfeed_state.mark_unread_on_change = $(e.target).val() === 'unread';
         this.$('.NB-add-site-webfeed-radio-option').removeClass('NB-selected');
         $(e.target).closest('.NB-add-site-webfeed-radio-option').addClass('NB-selected');
+    },
+
+    open_webfeed_upgrade_modal: function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        NEWSBLUR.reader.open_premium_upgrade_modal();
     },
 
     subscribe_webfeed: function () {
@@ -3136,6 +3311,35 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
             state.trending_loaded = false;
             this.fetch_search_trending_feeds();
         }
+    },
+
+    handle_trending_category_change: function (e) {
+        var $pill = $(e.currentTarget);
+        var category = $pill.data('category');
+        var state = this.search_state;
+
+        if (category === state.trending_category) return;
+
+        state.trending_category = category;
+        state.trending_page = 1;
+        state.trending_has_more = true;
+        state.trending_feeds_collection.reset();
+        state.trending_loaded = false;
+
+        $pill.siblings().removeClass('NB-active');
+        $pill.addClass('NB-active');
+
+        var descriptions = {
+            'popular': 'Most subscribed-to feeds this week',
+            'rising': 'Small feeds with the fastest-growing subscriber base',
+            'hidden_gems': 'Feeds with deeply engaged readers, not yet widely known',
+            'new_arrivals': 'Recently added feeds that are gaining subscribers'
+        };
+        var $section = $pill.closest('.NB-add-site-trending-section');
+        $section.find('.NB-add-site-trending-description').text(descriptions[category]);
+        $section.find('.NB-add-site-trending-content').html(this.make_loading_indicator());
+
+        this.fetch_search_trending_feeds();
     },
 
     // ==================
@@ -4681,7 +4885,7 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
     },
 
     handle_reddit_search_keypress: function (e) {
-        if (e.which === 13) this.perform_reddit_search();
+        if (e.which === 13) this.perform_reddit_combined_search();
     },
 
     handle_reddit_search_input: function (e) {
@@ -4699,6 +4903,8 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
 
         if (!query) {
             this.reddit_state.results = [];
+            this.reddit_state.api_results = [];
+            this.reddit_state.api_loading = false;
             this.reddit_state.popular_feeds_loaded = false;
             this.reddit_state.popular_feeds = [];
             this.reddit_state.popular_feeds_collection = null;
@@ -4708,6 +4914,12 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
         }
 
         this.reddit_search_debounced();
+        this.reddit_api_search_debounced();
+    },
+
+    perform_reddit_combined_search: function () {
+        this.perform_reddit_popular_search();
+        this.perform_reddit_api_search();
     },
 
     perform_reddit_popular_search: function () {
@@ -4725,6 +4937,31 @@ NEWSBLUR.Views.AddSiteView = Backbone.View.extend({
         state.popular_feeds_collection = null;
         state.popular_offset = 0;
         this.render_reddit_popular();
+    },
+
+    perform_reddit_api_search: function () {
+        var self = this;
+        var state = this.reddit_state;
+        var query = state.query;
+
+        if (!query || query.length < 2) return;
+
+        state.api_loading = true;
+
+        this.model.make_request('/discover/reddit/search', { query: query, limit: 15 }, function (data) {
+            state.api_loading = false;
+            if (data && data.code === 1 && data.results) {
+                state.api_results = data.results;
+            } else {
+                state.api_results = [];
+            }
+            if (self.active_tab === 'reddit') {
+                self.render_reddit_api_results();
+            }
+        }, function () {
+            state.api_loading = false;
+            state.api_results = [];
+        }, { request_type: 'GET' });
     },
 
     handle_newsletter_search_input: function (e) {

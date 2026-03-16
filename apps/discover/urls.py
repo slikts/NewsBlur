@@ -18,4 +18,5 @@ urlpatterns = [
     re_path(r"^similar/(?P<feed_id>\d+)/?$", views.discover_feeds, name="discover-feeds"),
     re_path(r"^similar/feeds/?$", views.discover_feeds, name="discover-feeds-post"),
     re_path(r"^similar/stories/(?P<story_hash>\w+:[\w\d]+)/?$", views.discover_stories, name="discover-stories"),
+    re_path(r"^index/?$", views.discover_index, name="discover-index"),
 ]

@@ -4,6 +4,7 @@ import uuid
 from django.views.decorators.http import require_http_methods
 
 from apps.rss_feeds.models import Feed
+from apps.statistics.rtrending_webfeeds import RTrendingWebFeed
 from utils import json_functions as json
 from utils import log as logging
 from utils.user_functions import ajax_login_required
@@ -40,6 +41,8 @@ def analyze(request):
         f"~BB~FWWeb Feed: Analyzing ~SB{url}~SN" + (f" (hint: {story_hint})" if story_hint else ""),
     )
 
+    RTrendingWebFeed.record_analysis(request.user.pk, url, has_hint=bool(story_hint))
+
     AnalyzeWebFeedPage.apply_async(
         kwargs={
             "user_id": request.user.pk,
@@ -63,6 +66,12 @@ def analyze(request):
 @json.json_view
 def subscribe(request):
     """Create a web feed subscription from a selected variant."""
+    from apps.profile.models import Profile
+
+    profile = Profile.objects.get(user=request.user)
+    if not profile.is_archive:
+        return {"code": -1, "message": "Web Feed requires a Premium Archive subscription."}
+
     url = request.POST.get("url", "").strip()
     variant_index = int(request.POST.get("variant_index", 0))
     folder = request.POST.get("folder", "")
@@ -83,7 +92,13 @@ def subscribe(request):
     if not URL_RE.match(url):
         return {"code": -1, "message": "Invalid URL"}
 
-    if not story_container_xpath or not title_xpath or not link_xpath:
+    if not story_container_xpath or not title_xpath:
+        logging.user(
+            request.user,
+            "~BB~FWWeb Feed: ~FR~SBMissing XPaths~SN~FW - "
+            "story_container=%s title=%s link=%s POST keys=%s"
+            % (repr(story_container_xpath), repr(title_xpath), repr(link_xpath), list(request.POST.keys())),
+        )
         return {"code": -1, "message": "Missing XPath expressions for story extraction"}
 
     feed_address = f"webfeed:{url}"
@@ -157,12 +172,11 @@ def subscribe(request):
     except Exception as e:
         logging.user(request.user, f"~BB~FWWeb Feed: ~FR~SBFavicon import failed~SN~FW - {e}")
 
+    RTrendingWebFeed.record_subscription(request.user.pk, url, variant_index)
+
     logging.user(request.user, f"~BB~FWWeb Feed: Subscribed to ~SB{url}~SN (feed {feed.pk})")
 
     # Trigger background fetch for archive subscribers
-    from apps.profile.models import Profile
-
-    profile = Profile.objects.get(user=request.user)
     if profile.is_archive:
         from apps.webfeed.tasks import FetchWebFeed
 
@@ -202,6 +216,8 @@ def reanalyze(request):
         return {"code": -1, "message": "Not a web feed"}
 
     url = feed.feed_address[len("webfeed:") :]
+
+    RTrendingWebFeed.record_reanalysis(request.user.pk)
 
     logging.user(request.user, f"~BB~FWWeb Feed: Re-analyzing ~SB{url}~SN (feed {feed_id})")
 

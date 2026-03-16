@@ -358,7 +358,7 @@ _.extend(NEWSBLUR.ReaderPreferences.prototype, {
                             $.make('div', { className: 'NB-preference-sublabel' }, 'Folders, feeds, and story titles')
                         ])
                     ]),
-                    $.make('div', { className: 'NB-preference NB-preference-briefing-enabled' }, [
+                    (NEWSBLUR.Globals.is_staff && $.make('div', { className: 'NB-preference NB-preference-briefing-enabled' }, [
                         $.make('div', { className: 'NB-preference-options' }, [
                             $.make('div', { className: 'NB-social-card NB-social-card-enable' }, [
                                 $.make('input', { id: 'NB-preference-briefing-enabled-1', type: 'radio', name: 'briefing_enabled', value: 'true' }),
@@ -383,7 +383,7 @@ _.extend(NEWSBLUR.ReaderPreferences.prototype, {
                         $.make('div', { className: 'NB-preference-label' }, [
                             'Daily Briefing'
                         ])
-                    ]),
+                    ])),
                     (NEWSBLUR.Globals.is_staff && $.make('div', { className: 'NB-preference NB-preference-clustering-enabled' }, [
                         $.make('div', { className: 'NB-preference-options' }, [
                             $.make('div', { className: 'NB-social-card NB-social-card-enable' }, [
@@ -721,6 +721,12 @@ _.extend(NEWSBLUR.ReaderPreferences.prototype, {
                                 ])
                             ]),
                             $.make('div', [
+                                $.make('input', { id: 'NB-preference-readstorydelay-3', type: 'radio', name: 'read_story_delay', value: "-2" }),
+                                $.make('label', { 'for': 'NB-preference-readstorydelay-3' }, [
+                                    'Manually or by clicking in the story'
+                                ])
+                            ]),
+                            $.make('div', [
                                 $.make('input', { id: 'NB-preference-readstorydelay-0', type: 'radio', name: 'read_story_delay', value: "-1" }),
                                 $.make('label', { 'for': 'NB-preference-readstorydelay-0' }, [
                                     'Manually by hitting ',
@@ -742,7 +748,7 @@ _.extend(NEWSBLUR.ReaderPreferences.prototype, {
                         ]),
                         $.make('div', { className: 'NB-preference-label' }, [
                             'Mark a story as read',
-                            $.make('div', { className: 'NB-preference-sublabel' }, 'Clicking on a story marks it as read immediately.')
+                            $.make('div', { className: 'NB-preference-sublabel' }, 'Selecting a story in the story titles marks it as read.')
                         ])
                     ]),
                     $.make('div', { className: 'NB-preference NB-preference-markreadnextfeed' }, [
@@ -1378,7 +1384,9 @@ _.extend(NEWSBLUR.ReaderPreferences.prototype, {
         $('input[name=cluster_mark_read]', $modal).prop('checked', !!cluster_mark_read);
 
         // reader_preferences.js: Load briefing preferences from API
-        this.load_briefing_preferences();
+        if (NEWSBLUR.Globals.is_staff) {
+            this.load_briefing_preferences();
+        }
     },
 
     load_briefing_preferences: function () {
@@ -1649,7 +1657,9 @@ _.extend(NEWSBLUR.ReaderPreferences.prototype, {
         $('.NB-modal-submit-button', this.$modal).text('Saving...').attr('disabled', true).addClass('NB-disabled');
 
         // reader_preferences.js: Save briefing preferences separately
-        this.save_briefing_preferences(form);
+        if (NEWSBLUR.Globals.is_staff) {
+            this.save_briefing_preferences(form);
+        }
 
         this.model.save_preferences(form, function (data) {
             NEWSBLUR.reader.switch_feed_view_unread_view();

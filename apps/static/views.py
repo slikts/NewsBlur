@@ -17,6 +17,98 @@ def about(request):
     return render(request, "static/about.xhtml")
 
 
+def pricing(request):
+    return render(request, "static/pricing.xhtml")
+
+
+def features(request):
+    return render(request, "static/features.xhtml")
+
+
+def compare_feedly(request):
+    return render(request, "static/compare_feedly.xhtml")
+
+
+def compare_inoreader(request):
+    return render(request, "static/compare_inoreader.xhtml")
+
+
+def compare_readwise(request):
+    return render(request, "static/compare_readwise.xhtml")
+
+
+def compare_the_old_reader(request):
+    return render(request, "static/compare_the_old_reader.xhtml")
+
+
+def alt_open_source(request):
+    return render(request, "static/alt_open_source.xhtml")
+
+
+def alt_self_hosted(request):
+    return render(request, "static/alt_self_hosted.xhtml")
+
+
+def alt_google_reader(request):
+    return render(request, "static/alt_google_reader.xhtml")
+
+
+def alt_feedly(request):
+    return render(request, "static/alt_feedly.xhtml")
+
+
+def alt_inoreader(request):
+    return render(request, "static/alt_inoreader.xhtml")
+
+
+def compare_feedbin(request):
+    return render(request, "static/compare_feedbin.xhtml")
+
+
+def feature_intelligence_training(request):
+    return render(request, "static/feature_intelligence_training.xhtml")
+
+
+def feature_ask_ai(request):
+    return render(request, "static/feature_ask_ai.xhtml")
+
+
+def feature_web_feeds(request):
+    return render(request, "static/feature_web_feeds.xhtml")
+
+
+def feature_newsletters(request):
+    return render(request, "static/feature_newsletters.xhtml")
+
+
+def feature_search(request):
+    return render(request, "static/feature_search.xhtml")
+
+
+def feature_archive(request):
+    return render(request, "static/feature_archive.xhtml")
+
+
+def feature_saved_stories(request):
+    return render(request, "static/feature_saved_stories.xhtml")
+
+
+def feature_native_apps(request):
+    return render(request, "static/feature_native_apps.xhtml")
+
+
+def pricing_premium(request):
+    return render(request, "static/pricing_premium.xhtml", {"current_plan": "premium"})
+
+
+def pricing_archive(request):
+    return render(request, "static/pricing_archive.xhtml", {"current_plan": "archive"})
+
+
+def pricing_pro(request):
+    return render(request, "static/pricing_pro.xhtml", {"current_plan": "pro"})
+
+
 def faq(request):
     return render(request, "static/faq.xhtml")
 

@@ -1518,7 +1518,8 @@ color: #a85b40;
 }
 
 .NB-dark .NB-media-player-settings svg,
-.NB-dark .NB-media-player-close svg {
+.NB-dark .NB-media-player-close svg,
+.NB-dark .NB-media-player-fullscreen svg {
     fill: #aaa;
 }
 
@@ -1531,7 +1532,8 @@ color: #a85b40;
 .NB-dark .NB-media-player-skip-back:hover,
 .NB-dark .NB-media-player-skip-forward:hover,
 .NB-dark .NB-media-player-settings:hover,
-.NB-dark .NB-media-player-close:hover {
+.NB-dark .NB-media-player-close:hover,
+.NB-dark .NB-media-player-fullscreen:hover {
     background-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -1699,6 +1701,14 @@ color: #a85b40;
 
 .NB-dark .segmented-control li:hover:not(.NB-disabled):not(.NB-active) {
     background-color: #585b63;
+}
+
+.NB-dark .NB-dashboard-column-control li img {
+    filter: invert(0.7);
+}
+
+.NB-dark .NB-dashboard-column-control li.NB-active img {
+    filter: invert(0.9);
 }
 
 .NB-dark #story_taskbar {
@@ -2053,7 +2063,8 @@ border-bottom: 1px solid #222d31;
 */
 
 /* Staff-Only Badge - Dark Mode */
-.NB-dark .NB-staff-badge {
+.NB-dark .NB-staff-badge,
+.NB-dark .NB-classifier-staff-badge {
     color: #a89880;
 }
 
@@ -2370,6 +2381,9 @@ color: #fff;
 
 .NB-dark ul.tagit {
     border-color: #303739;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
 }
 
 /* Tag button and "Add 1 story tag" button */
@@ -2380,12 +2394,17 @@ color: #fff;
     border-color: rgba(255, 255, 255, .1) transparent rgba(0, 0, 0, .1);
 }
 
+.NB-dark ul.tagit li.tagit-new {
+    flex: 1;
+    min-width: 50px;
+}
+
 /* Tag window when saving story. Input box */
 .NB-dark ul.tagit input[type="text"] {
     color: #c0c0c0;
-    background: none;
-    background-color: #505050;
-    border: solid 1px #505050;
+    background: transparent;
+    border: none;
+    width: 100%;
 }
 
 /* Tag window when saving story. Input box suggestions (1 of 3) */
@@ -2393,24 +2412,40 @@ color: #fff;
     width: auto;
     border: 1px solid #90928b;
     border-radius: 4px;
+    background-color: #303739;
+    color: #c0c0c0;
 }
 
 /* Tag window when saving story. Input box suggestions (2 of 3) */
 .NB-dark .NB-tagging-autocomplete.ui-widget-content a {
     border-radius: 0px;
-    /* 	border: 1px solid #90928b; */
     background-color: #303739;
     background: #303739;
     color: #c0c0c0;
 }
 
+/* Tag window when saving story. Input box suggestions - focused item */
+.NB-dark .NB-tagging-autocomplete.ui-widget-content a.ui-state-focus,
+.NB-dark .NB-tagging-autocomplete.ui-widget-content a.ui-state-active {
+    background-color: #252D30;
+    background: #252D30;
+    color: #e0e0e0;
+    border-color: #505050;
+}
+
 /* Tag window when saving story. Input box suggestions (3 of 3) */
 .NB-dark .NB-tagging-autocomplete.ui-widget-content a:hover {
     border-radius: 0px;
-    /* 	border: 1px solid #90928b; */
-    background-color: #303739;
+    background-color: #252D30;
     background: #252D30;
+    color: #e0e0e0;
+}
+
+.NB-dark .NB-sideoption-save .NB-sideoption-save-notes {
     color: #c0c0c0;
+    background: none;
+    background-color: #303739;
+    border: solid 1px #303739;
 }
 
 .NB-dark .NB-sideoption-share-comments {
@@ -3635,6 +3670,165 @@ a.mention, a.mention-group {
     color: #f59e0b;
 }
 
+/* ========================================== */
+/* = AI Content Filter (text) Dark Mode    = */
+/* ========================================== */
+
+.NB-dark .NB-content-filter-header-icon {
+    color: #5b9fd9;
+}
+
+.NB-dark .NB-classifier-content-prompt-input {
+    background: #2a2c2e;
+    border-color: #4a4c4e;
+    color: #e0e0e0;
+}
+
+.NB-dark .NB-classifier-content-prompt-input:focus {
+    border-color: #4A90D9;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+}
+
+.NB-dark .NB-classifier-content-prompt-input:disabled {
+    background: #1e2022;
+    color: #555;
+}
+
+/* ======================================= */
+/* = AI Classifier Cost Estimate Dark    = */
+/* ======================================= */
+
+.NB-dark .NB-ai-cost-estimate {
+    background: #2a2c2e;
+    border-color: #3a3c3e;
+}
+
+.NB-dark .NB-ai-cost-monthly {
+    color: #e0e0e0;
+}
+
+.NB-dark .NB-ai-cost-monthly small {
+    color: #777;
+}
+
+.NB-dark .NB-ai-cost-separator {
+    color: #555;
+}
+
+.NB-dark .NB-ai-cost-daily {
+    color: #aaa;
+}
+
+.NB-dark .NB-ai-cost-daily small {
+    color: #777;
+}
+
+.NB-dark .NB-ai-cost-breakdown {
+    color: #666;
+}
+
+.NB-dark .NB-ai-cost-preview {
+    color: #666;
+}
+
+.NB-dark .NB-ai-cost-preview b {
+    color: #999;
+}
+
+.NB-dark .NB-ai-billing-setup {
+    background: #4a3f00;
+    border-color: #7a6600;
+    color: #ffd54f;
+}
+
+.NB-dark .NB-ai-billing-manage {
+    background: #1b3a1b;
+    border-color: #2e6b2e;
+    color: #81c784;
+}
+
+/* ====================================== */
+/* = AI Image Filter (VLM) Dark Mode   = */
+/* ====================================== */
+
+.NB-dark .NB-image-filter-header-icon {
+    color: #5b9fd9;
+}
+
+.NB-dark .NB-image-filter-thumb {
+    background: #2a2c2e;
+}
+
+.NB-dark .NB-image-filter-thumb-neutral {
+    border-color: #555;
+}
+
+.NB-dark .NB-classifier-prompt-input {
+    background: #2a2c2e;
+    border-color: #4a4c4e;
+    color: #e0e0e0;
+}
+
+.NB-dark .NB-classifier-prompt-input:focus {
+    border-color: #4A90D9;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+}
+
+.NB-dark .NB-classifier-prompt-input:disabled {
+    background: #1e2022;
+    color: #555;
+}
+
+.NB-dark .NB-image-filter-thumb-label {
+    background: #3a3c3e;
+    color: #888;
+}
+
+.NB-dark .NB-image-filter-thumb-label-match {
+    background: #2e7d32;
+    color: #fff;
+}
+
+.NB-dark .NB-image-filter-status-match {
+    background: #1a2e1a;
+    color: #66bb6a;
+    border-color: #2e7d32;
+}
+
+.NB-dark .NB-image-filter-status-neutral {
+    background: #2e1a1a;
+    color: #ef9a9a;
+    border-color: #6d3a3a;
+}
+
+.NB-dark .NB-image-filter-status-error {
+    background: #3a2a1a;
+    color: #e6a040;
+    border-color: #7a5a2a;
+}
+
+.NB-dark .NB-image-filter-item-delete {
+    color: #555;
+}
+
+.NB-dark .NB-image-filter-item-delete:hover {
+    color: #c45555;
+}
+
+.NB-dark .NB-ai-filter-upgrade-banner-inner {
+    background: linear-gradient(135deg, #2a2510 0%, #332a0d 100%);
+    border-color: #6d5a00;
+    color: #e6c84a;
+}
+
+.NB-dark .NB-ai-filter-upgrade-banner-inner a {
+    color: #ffc107;
+}
+
+.NB-dark .NB-ai-filter-upgrade-banner-inner a:hover {
+    color: #ffe082;
+}
+
 /* ===================================== */
 /* = Getting Started Module Dark Mode  = */
 /* ===================================== */
@@ -4761,6 +4955,27 @@ a.mention, a.mention-group {
     border-color: #444;
     color: #DDD;
 }
+.NB-dark .NB-add-site-trending-pill {
+    background: #2A2A2A;
+    border-color: #444;
+    color: #999;
+}
+.NB-dark .NB-add-site-trending-pill:hover {
+    border-color: #5C89C9;
+    background: #1E2A3A;
+    color: #7AA3D5;
+}
+.NB-dark .NB-add-site-trending-pill.NB-active {
+    background: #5C89C9;
+    color: #FFF;
+    border-color: #5C89C9;
+}
+.NB-dark .NB-add-site-trending-pill.NB-active:hover {
+    background: #4A78B5;
+}
+.NB-dark .NB-add-site-trending-description {
+    color: #666;
+}
 
 /* Newsletter Filter Labels Dark Mode */
 .NB-dark .NB-add-site-filter-label {
@@ -4808,6 +5023,49 @@ a.mention, a.mention-group {
 .NB-dark .NB-discover-popover .NB-discover-index-banner {
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
     border-color: rgba(99, 102, 241, 0.25);
+}
+
+/* Web Feed archive upgrade banner dark mode */
+.NB-dark .NB-add-site-webfeed-archive-banner {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
+    border-color: rgba(99, 102, 241, 0.25);
+}
+.NB-dark .NB-add-site-webfeed-archive-banner:hover {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.18) 100%);
+    border-color: rgba(99, 102, 241, 0.35);
+}
+.NB-dark .NB-add-site-webfeed-archive-banner-title {
+    color: #d0d0d0;
+}
+.NB-dark .NB-add-site-webfeed-archive-banner-body {
+    color: #909090;
+}
+
+/* Paused web feed banner dark mode */
+.NB-dark .NB-webfeed-paused-header {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
+    border-color: rgba(99, 102, 241, 0.25);
+}
+.NB-dark .NB-webfeed-paused-message {
+    color: #a5b4fc;
+}
+
+/* Discover feed badges dark mode */
+.NB-dark .NB-discover-feed-badges .NB-feed-badge .NB-feed-badge-title {
+    color: #e0e0e0;
+}
+
+.NB-dark .NB-discover-feed-badges .NB-feed-badge .NB-feed-badge-meta {
+    color: #808080;
+}
+
+.NB-dark .NB-discover-feed-badges .NB-feed-badge .NB-feed-badge-tagline {
+    color: #909090;
+}
+
+.NB-dark .NB-discover-feed-badges .NB-feed-badge .NB-feed-badge-actions,
+.NB-dark .NB-discover-feed-badges .NB-feed-badge .NB-feed-badge-subscribed-actions {
+    border-top-color: #3a4245;
 }
 
 .NB-dark .NB-staff-only-badge {
@@ -4994,6 +5252,16 @@ a.mention, a.mention-group {
 /* ====================================== */
 /* = Daily Briefing - Group View (Dark) = */
 /* ====================================== */
+
+/* darkmode.css: Briefing Admin */
+.NB-dark .NB-briefing-admin-meta {
+    color: #707070;
+}
+
+.NB-dark .NB-briefing-admin-badge {
+    border-bottom-color: #303030;
+    background: #1e1f21;
+}
 
 /* darkmode.css: Briefing group container */
 .NB-dark .NB-briefing-group {
@@ -5200,6 +5468,11 @@ a.mention, a.mention-group {
 
 .NB-dark .NB-briefing-progress-message {
     color: #A0A0A0;
+}
+
+.NB-dark .NB-briefing-loading {
+    background-color: #1A1A1A;
+    border-bottom-color: #303030;
 }
 
 /* darkmode.css: Error state */

@@ -6,10 +6,13 @@ import zlib
 
 import redis
 from django.conf import settings
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.models import User
 from django.utils.encoding import smart_str
 
 from apps.briefing.models import (
     BRIEFING_SECTION_DEFINITIONS,
+    DEFAULT_SECTION_ORDER,
     DEFAULT_SECTIONS,
     VALID_SECTION_KEYS,
     MBriefing,
@@ -45,6 +48,19 @@ def _normalize_section_dict(d, merge_lists=False):
     return result
 
 
+def _build_section_order(prefs):
+    """Build complete section_order list from prefs, falling back to default order."""
+    custom_keys = ["custom_%d" % (i + 1) for i in range(len(prefs.custom_section_prompts or []))]
+    if prefs.section_order:
+        # views.py: Return stored order, but ensure any new custom keys are appended
+        order = list(prefs.section_order)
+        for key in custom_keys:
+            if key not in order:
+                order.append(key)
+        return order
+    return DEFAULT_SECTION_ORDER + custom_keys
+
+
 def _get_briefing_notification_types(user_id, briefing_feed_id):
     """Return list of active notification types for the user's briefing feed."""
     notification_types = []
@@ -78,9 +94,13 @@ def load_briefing_stories(request):
         return {"code": -1, "message": "Daily Briefing is currently staff-only."}
     profile = user.profile
     is_premium_archive = profile.is_archive or profile.is_pro
-    limit = int(request.GET.get("limit", 10))
+    per_page = min(50, max(1, int(request.GET.get("limit", 5))))
+    page = max(1, int(request.GET.get("page", 1)))
+    offset = (page - 1) * per_page
 
-    briefings = MBriefing.latest_for_user(user.pk, limit=limit)
+    briefings = list(MBriefing.latest_for_user(user.pk, limit=per_page + 1, offset=offset))
+    has_next_page = len(briefings) > per_page
+    briefings = briefings[:per_page]
 
     r = redis.Redis(connection_pool=settings.REDIS_STORY_HASH_POOL)
     read_stories_key = "RS:%s" % user.pk
@@ -120,7 +140,7 @@ def load_briefing_stories(request):
 
         curated_stories = []
         if curated_hashes:
-            stories_db = MStory.objects(story_hash__in=curated_hashes)
+            stories_db = MStory.objects(story_hash__in=curated_hashes).order_by()
             stories_by_hash = {s.story_hash: s for s in stories_db}
 
             feed_ids = set(s.story_feed_id for s in stories_db)
@@ -189,6 +209,8 @@ def load_briefing_stories(request):
         "briefing_feed_id": prefs.briefing_feed_id,
         "enabled": prefs.enabled,
         "section_definitions": section_definitions,
+        "has_next_page": has_next_page,
+        "page": page,
     }
 
     # views.py: Include full preferences when not enabled so the onboarding view
@@ -217,6 +239,7 @@ def load_briefing_stories(request):
             "summary_style": prefs.summary_style or "bullets",
             "include_read": prefs.include_read,
             "sections": dict(DEFAULT_SECTIONS, **(prefs.sections or {})),
+            "section_order": _build_section_order(prefs),
             "custom_section_prompts": prefs.custom_section_prompts or [],
             "notification_types": _get_briefing_notification_types(user.pk, prefs.briefing_feed_id),
             "briefing_feed_id": prefs.briefing_feed_id,
@@ -268,7 +291,7 @@ def briefing_preferences(request):
         if story_count:
             try:
                 story_count = int(story_count)
-                if story_count in (5, 10, 15, 20):
+                if story_count in (5, 10, 15, 20, 25):
                     prefs.story_count = story_count
             except (ValueError, TypeError):
                 pass
@@ -332,6 +355,16 @@ def briefing_preferences(request):
             except (ValueError, TypeError):
                 pass
 
+        section_order_raw = request.POST.get("section_order")
+        if section_order_raw:
+            try:
+                order_list = stdlib_json.loads(section_order_raw)
+                if isinstance(order_list, list):
+                    validated = [k for k in order_list if k in VALID_SECTION_KEYS]
+                    prefs.section_order = validated if validated else None
+            except (ValueError, TypeError):
+                pass
+
         prefs.save()
 
     # Migrate old "focused" story_sources to the new read_filter field
@@ -371,6 +404,7 @@ def briefing_preferences(request):
         "summary_style": prefs.summary_style or "bullets",
         "include_read": prefs.include_read,
         "sections": dict(DEFAULT_SECTIONS, **(prefs.sections or {})),
+        "section_order": _build_section_order(prefs),
         "custom_section_prompts": prefs.custom_section_prompts or [],
         "notification_types": _get_briefing_notification_types(user.pk, prefs.briefing_feed_id),
         "briefing_model": prefs.briefing_model or DEFAULT_BRIEFING_MODEL,
@@ -414,6 +448,93 @@ def generate_briefing(request):
     GenerateUserBriefing.delay(user.pk, on_demand=True)
 
     return {"status": "generating", "briefing_feed_id": feed.pk}
+
+
+@staff_member_required
+@ajax_login_required
+@json.json_view
+def load_all_briefings_admin(request):
+    """
+    GET /briefing/admin/all
+
+    Staff-only endpoint that returns all users' completed briefings for quality auditing.
+    Includes user profile data for each briefing so staff can review and manage accounts.
+    """
+    page = max(1, int(request.GET.get("page", 1)))
+    per_page = min(50, max(1, int(request.GET.get("per_page", 20))))
+    offset = (page - 1) * per_page
+
+    total_count = MBriefing.objects.filter(status="complete").count()
+    briefings = list(
+        MBriefing.objects.filter(status="complete").order_by("-briefing_date")[offset : offset + per_page]
+    )
+
+    user_ids = list(set(b.user_id for b in briefings))
+    story_hashes = [b.summary_story_hash for b in briefings if b.summary_story_hash]
+
+    # views.py: Batch-fetch user profiles from MSocialProfile for the profile badge
+    from apps.social.models import MSocialProfile
+
+    profiles_by_id = {}
+    for p in MSocialProfile.objects.filter(user_id__in=user_ids):
+        profiles_by_id[p.user_id] = {
+            "user_id": p.user_id,
+            "username": p.user.username if p.user else "[deleted]",
+            "photo_url": p.email_photo_url,
+            "location": p.location or "",
+            "website": p.website or "",
+            "bio": p.bio or "",
+            "shared_stories_count": p.shared_stories_count or 0,
+        }
+
+    # views.py: Fallback to Django User for users without social profiles
+    missing_ids = [uid for uid in user_ids if uid not in profiles_by_id]
+    if missing_ids:
+        for u in User.objects.filter(pk__in=missing_ids):
+            profiles_by_id[u.pk] = {
+                "user_id": u.pk,
+                "username": u.username,
+                "photo_url": "",
+                "location": "",
+                "website": "",
+                "bio": "",
+                "shared_stories_count": 0,
+            }
+
+    # views.py: Batch-fetch summary stories to extract the briefing HTML content
+    stories_by_hash = {}
+    if story_hashes:
+        for s in MStory.objects(story_hash__in=story_hashes):
+            stories_by_hash[s.story_hash] = s
+
+    entries = []
+    for b in briefings:
+        story = stories_by_hash.get(b.summary_story_hash)
+        summary_html = ""
+        summary_title = ""
+        if story:
+            d = _story_to_dict(story)
+            summary_html = d["story_content"]
+            summary_title = d["story_title"]
+
+        entries.append(
+            {
+                "briefing_id": str(b.id),
+                "briefing_date": (b.briefing_date.isoformat() + "Z") if b.briefing_date else None,
+                "frequency": b.frequency,
+                "user_profile": profiles_by_id.get(b.user_id, {"user_id": b.user_id, "username": "Unknown"}),
+                "summary_html": summary_html,
+                "summary_story_title": summary_title,
+                "curated_story_count": len(b.curated_story_hashes or []),
+            }
+        )
+
+    return {
+        "briefing_admin_entries": entries,
+        "has_next_page": (offset + per_page) < total_count,
+        "page": page,
+        "total_count": total_count,
+    }
 
 
 def _story_to_dict(story):
