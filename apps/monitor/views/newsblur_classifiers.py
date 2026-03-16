@@ -16,7 +16,7 @@ class Classifiers(View):
         data = {}
 
         # MClassifierFeed has no scope field - it's always feed-scoped
-        data["feeds"] = MClassifierFeed.objects._collection.count()
+        data["feeds"] = MClassifierFeed.objects._collection.count_documents({})
 
         # Classifier types that support scope
         scoped_classifiers = [
