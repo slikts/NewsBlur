@@ -476,7 +476,10 @@ def load_feeds(request):
     include_favicons = is_true(request.GET.get("include_favicons", False))
     flat = is_true(request.GET.get("flat", False))
     update_counts = is_true(request.GET.get("update_counts", True))
-    version = int(request.GET.get("v", 1))
+    try:
+        version = int(request.GET.get("v", 1))
+    except (ValueError, TypeError):
+        version = 1
 
     if include_favicons == "false":
         include_favicons = False
@@ -1586,7 +1589,10 @@ def load_starred_stories(request):
     highlights = is_true(request.GET.get("highlights", False))
     story_hashes = request.GET.getlist("h") or request.GET.getlist("h[]")
     story_hashes = story_hashes[:100]
-    version = int(request.GET.get("v", 1))
+    try:
+        version = int(request.GET.get("v", 1))
+    except (ValueError, TypeError):
+        version = 1
     now = localtime_for_timezone(datetime.datetime.now(), user.profile.timezone)
     message = None
     order_by = "-" if order == "newest" else ""
@@ -1898,6 +1904,8 @@ def folder_rss_feed(request, user_id, secret_token, unread_filter, folder_slug):
 
     user_sub_folders = get_object_or_404(UserSubscriptionFolders, user=user)
     feed_ids, folder_title = user_sub_folders.feed_ids_under_folder_slug(folder_slug)
+    if not folder_title:
+        raise Http404
 
     usersubs = UserSubscription.subs_for_feeds(user.pk, feed_ids=feed_ids)
     if feed_ids and ((user.profile.is_archive and date_hack_2023) or (not date_hack_2023)):
@@ -3622,13 +3630,16 @@ def delete_feeds_by_folder(request):
 @ajax_login_required
 @json.json_view
 def rename_feed(request):
-    feed = get_object_or_404(Feed, pk=int(request.POST["feed_id"]))
+    feed_id = request.POST.get("feed_id")
+    feed_title = request.POST.get("feed_title")
+    if not feed_id or not feed_title:
+        return dict(code=-1, message="Missing feed_id or feed_title")
+
+    feed = get_object_or_404(Feed, pk=int(feed_id))
     try:
         user_sub = UserSubscription.objects.get(user=request.user, feed=feed)
     except UserSubscription.DoesNotExist:
         return dict(code=-1, message=f"You are not subscribed to {feed.feed_title}")
-
-    feed_title = request.POST["feed_title"]
 
     logging.user(request, "~FRRenaming feed '~SB%s~SN' to: ~SB%s" % (feed.feed_title, feed_title))
 

@@ -133,6 +133,7 @@ MIDDLEWARE = (
     "django.middleware.common.CommonMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.profile.middleware.AttackBanMiddleware",
     "apps.profile.middleware.TimingMiddleware",
     "apps.profile.middleware.LastSeenMiddleware",
     "apps.profile.middleware.UserAgentBanMiddleware",
@@ -389,9 +390,6 @@ STRIPE_PUBLISHABLE = "YOUR-PUBLISHABLE-API-KEY"
 ZEBRA_ENABLE_APP = True
 
 # Stripe Metered Billing for AI Classifiers
-# Create meters and prices in Stripe Dashboard, then set IDs here or in local_settings.py
-STRIPE_METER_TEXT_CLASSIFICATION = ""
-STRIPE_METER_IMAGE_CLASSIFICATION = ""
 STRIPE_PRICE_TEXT_CLASSIFICATION = ""
 STRIPE_PRICE_IMAGE_CLASSIFICATION = ""
 
