@@ -1,17 +1,18 @@
 package com.newsblur.fragment;
 
-import java.util.Map;
-
 import android.app.Dialog;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.newsblur.R;
@@ -26,6 +27,11 @@ import com.newsblur.util.FeedSet;
 import com.newsblur.util.FeedUtils;
 import com.newsblur.util.NewsBlurBottomSheet;
 import com.newsblur.util.UIUtils;
+import com.newsblur.viewModel.StoryIntelTrainerViewModel;
+import com.newsblur.viewModel.StoryIntelUiState;
+
+import java.util.Locale;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -50,14 +56,22 @@ public class StoryIntelTrainerFragment extends BottomSheetDialogFragment {
     private DialogTrainstoryBinding contentBinding;
     private FragmentStoryIntelTrainerSheetBinding binding;
 
-    public static StoryIntelTrainerFragment newInstance(Story story, FeedSet fs) {
+    private StoryIntelUiState latestState;
+    private StoryIntelTrainerViewModel viewModel;
+
+    public static StoryIntelTrainerFragment newInstance(Story story, FeedSet fs, @Nullable String selectedText) {
         if (story.feedId.equals("0")) {
             throw new IllegalArgumentException("cannot intel train stories with a null/zero feed");
         }
         StoryIntelTrainerFragment fragment = new StoryIntelTrainerFragment();
         Bundle args = new Bundle();
+        args.putString("feedId", story.feedId);
+        args.putString("storyHash", story.storyHash);
+        args.putString("storyTitle", story.title);
+
         args.putSerializable("story", story);
-        args.putSerializable("feedset", fs);
+        args.putSerializable("feedSet", fs);
+        args.putString("selectedText", selectedText);
         fragment.setArguments(args);
         return fragment;
     }
@@ -89,9 +103,22 @@ public class StoryIntelTrainerFragment extends BottomSheetDialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         story = (Story) getArguments().getSerializable("story");
-        fs = (FeedSet) getArguments().getSerializable("feedset");
+        fs = (FeedSet) getArguments().getSerializable("feedSet");
+        @Nullable String selectedText = getArguments().getString("selectedText");
         classifier = dbHelper.getClassifierForFeed(story.feedId);
         bindTheme();
+
+        contentBinding.intelLoading.setVisibility(View.VISIBLE);
+        contentBinding.intelContent.setVisibility(View.GONE);
+
+        // get the viewmodel (Hilt-created Kotlin VM) using ViewModelProvider
+        viewModel = new ViewModelProvider(this).get(StoryIntelTrainerViewModel.class);
+
+        // observe LiveData UI state
+        viewModel.getUiState().observe(this, uiState -> {
+            latestState = uiState;
+            renderUiState(uiState);
+        });
 
         // set up the special title training box for the title from this story and the associated buttons
         contentBinding.intelTitleSelection.setText(story.title);
@@ -107,71 +134,74 @@ public class StoryIntelTrainerFragment extends BottomSheetDialogFragment {
         // the disposition buttons for a new title training don't immediately impact the classifier object,
         // lest the user want to change selection substring after choosing the disposition.  so just store
         // the training factor in a variable that can be pulled on completion
-        contentBinding.intelTitleLike.setOnClickListener(v -> {
-            newTitleTraining = Classifier.LIKE;
-            contentBinding.intelTitleLike.setBackgroundResource(R.drawable.ic_thumb_up_green);
-            contentBinding.intelTitleDislike.setBackgroundResource(R.drawable.ic_thumb_down_yellow);
+        contentBinding.intelTitleLike.setOnClickListener(v1 -> {
+            viewModel.setPendingTitleTraining(Classifier.LIKE);
+            setLikeViews(contentBinding.intelTitleLike, contentBinding.intelTitleDislike);
         });
-        contentBinding.intelTitleDislike.setOnClickListener(v -> {
-            newTitleTraining = Classifier.DISLIKE;
-            contentBinding.intelTitleLike.setBackgroundResource(R.drawable.ic_thumb_up_yellow);
-            contentBinding.intelTitleDislike.setBackgroundResource(R.drawable.ic_thumb_down_red);
+        contentBinding.intelTitleDislike.setOnClickListener(v2 -> {
+            viewModel.setPendingTitleTraining(Classifier.DISLIKE);
+            setDislikeViews(contentBinding.intelTitleLike, contentBinding.intelTitleDislike);
         });
-        contentBinding.intelTitleClear.setOnClickListener(v -> {
-            newTitleTraining = null;
-            contentBinding.intelTitleLike.setBackgroundResource(R.drawable.ic_thumb_up_yellow);
-            contentBinding.intelTitleDislike.setBackgroundResource(R.drawable.ic_thumb_down_yellow);
+        contentBinding.intelTitleClear.setOnClickListener(v3 -> {
+            viewModel.setPendingTitleTraining(null);
+            setClearViews(contentBinding.intelTitleLike, contentBinding.intelTitleDislike);
         });
 
-        // scan trained title fragments for this feed and see if any apply to this story
-        for (Map.Entry<String, Integer> rule : classifier.title.entrySet()) {
-            if (story.title.indexOf(rule.getKey()) >= 0) {
-                View row = getLayoutInflater().inflate(R.layout.include_intel_row, null);
-                TextView label = row.findViewById(R.id.intel_row_label);
-                label.setText(rule.getKey());
-                UIUtils.setupIntelDialogRow(row, classifier.title, rule.getKey());
-                contentBinding.existingTitleIntelContainer.addView(row);
-            }
-        }
-        
-        // list all tags for this story, trained or not
-        for (String tag : story.tags) {
-            View row = getLayoutInflater().inflate(R.layout.include_intel_row, null);
-            TextView label = row.findViewById(R.id.intel_row_label);
-            label.setText(tag);
-            UIUtils.setupIntelDialogRow(row, classifier.tags, tag);
-            contentBinding.existingTagIntelContainer.addView(row);
-        }
-        if (story.tags.length < 1) contentBinding.intelTagHeader.setVisibility(View.GONE);
+        if (selectedText != null && !selectedText.isEmpty()) {
+            // data
+            contentBinding.intelTextSelection.setText(selectedText);
+            contentBinding.intelTextSelection.setInputType(InputType.TYPE_NULL);
+            contentBinding.intelTextSelection.disableActionMenu();
+            contentBinding.intelTextSelection.selectAll();
+            contentBinding.intelTextSelection.setForceSelection(true);
 
-        // there is a single author per story
-        if (!TextUtils.isEmpty(story.authors)) {
-            View rowAuthor = getLayoutInflater().inflate(R.layout.include_intel_row, null);
-            TextView labelAuthor = rowAuthor.findViewById(R.id.intel_row_label);
-            labelAuthor.setText(story.authors);
-            UIUtils.setupIntelDialogRow(rowAuthor, classifier.authors, story.authors);
-            contentBinding.existingAuthorIntelContainer.addView(rowAuthor);
+            // visibility
+            contentBinding.intelTextHeader.setVisibility(View.VISIBLE);
+            contentBinding.intelTextSelection.setVisibility(View.VISIBLE);
+            contentBinding.intelTextClear.setVisibility(View.VISIBLE);
+            contentBinding.intelTextLike.setVisibility(View.VISIBLE);
+            contentBinding.intelTextDislike.setVisibility(View.VISIBLE);
+
+            // disposition buttons
+            contentBinding.intelTextLike.setOnClickListener(v4 -> {
+                viewModel.setPendingTextTraining(Classifier.LIKE);
+                setLikeViews(contentBinding.intelTextLike, contentBinding.intelTextDislike);
+            });
+            contentBinding.intelTextDislike.setOnClickListener(v5 -> {
+                viewModel.setPendingTextTraining(Classifier.DISLIKE);
+                setDislikeViews(contentBinding.intelTextLike, contentBinding.intelTextDislike);
+            });
+            contentBinding.intelTextClear.setOnClickListener(v6 -> {
+                viewModel.setPendingTextTraining(null);
+                setClearViews(contentBinding.intelTextLike, contentBinding.intelTextDislike);
+            });
         } else {
-            contentBinding.intelAuthorHeader.setVisibility(View.GONE);
+            contentBinding.intelTextHeader.setVisibility(View.GONE);
+            contentBinding.intelTextLike.setVisibility(View.GONE);
+            contentBinding.intelTextDislike.setVisibility(View.GONE);
+            contentBinding.intelTextClear.setVisibility(View.GONE);
+            contentBinding.intelTextSelection.setVisibility(View.GONE);
         }
 
-        // there is a single feed to be trained, but it is a bit odd in that the label is the title and
-        // the intel identifier is the feed ID
-        View rowFeed = getLayoutInflater().inflate(R.layout.include_intel_row, null);
-        TextView labelFeed = rowFeed.findViewById(R.id.intel_row_label);
-        labelFeed.setText(feedUtils.getFeedTitle(story.feedId));
-        UIUtils.setupIntelDialogRow(rowFeed, classifier.feeds, story.feedId);
-        contentBinding.existingFeedIntelContainer.addView(rowFeed);
-
-        binding.cancelButton.setOnClickListener(v -> dismiss());
-        binding.saveButton.setOnClickListener(v -> saveAndDismiss());
+        binding.cancelButton.setOnClickListener(v7 -> dismiss());
+        binding.saveButton.setOnClickListener(v8 -> saveAndDismiss());
     }
 
     private void saveAndDismiss() {
-        if ((newTitleTraining != null) && (!TextUtils.isEmpty(contentBinding.intelTitleSelection.getSelection()))) {
-            classifier.title.put(contentBinding.intelTitleSelection.getSelection(), newTitleTraining);
+        if (latestState == null || latestState.getClassifier() == null) {
+            return;
         }
-        feedUtils.updateClassifier(story.feedId, classifier, fs, requireActivity());
+        String textSelection =
+                (contentBinding.intelTextSelection.getVisibility() == View.VISIBLE)
+                        ? contentBinding.intelTextSelection.getSelection()
+                        : null;
+
+        Classifier updated = viewModel.buildUpdatedClassifier(
+                latestState.getClassifier(),
+                contentBinding.intelTitleSelection.getSelection(),
+                textSelection
+        );
+        feedUtils.updateClassifier(story.feedId, updated, fs, requireActivity());
         dismiss();
     }
 
@@ -204,4 +234,104 @@ public class StoryIntelTrainerFragment extends BottomSheetDialogFragment {
         super.onDestroyView();
     }
 
+    private void setDislikeViews(View like, View dislike) {
+        like.setBackgroundResource(R.drawable.ic_thumb_up_yellow);
+        dislike.setBackgroundResource(R.drawable.ic_thumb_down_red);
+    }
+
+    private void setLikeViews(View like, View dislike) {
+        like.setBackgroundResource(R.drawable.ic_thumb_up_green);
+        dislike.setBackgroundResource(R.drawable.ic_thumb_down_yellow);
+    }
+
+    private void setClearViews(View like, View dislike) {
+        like.setBackgroundResource(R.drawable.ic_thumb_up_yellow);
+        dislike.setBackgroundResource(R.drawable.ic_thumb_down_yellow);
+    }
+
+    private void renderUiState(StoryIntelUiState state) {
+        latestState = state;
+
+        contentBinding.intelLoading.setVisibility(state.getLoading() ? View.VISIBLE : View.GONE);
+        contentBinding.intelContent.setVisibility(state.getLoading() ? View.GONE : View.VISIBLE);
+
+        if (state.getError() != null) {
+            Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_LONG).show();
+        }
+
+        // enable/disable Save
+        if (binding != null) {
+            binding.saveButton.setEnabled(!state.getLoading() && state.getClassifier() != null);
+        }
+
+        if (state.getLoading() || state.getClassifier() == null) return;
+
+        Classifier c = state.getClassifier();
+
+        // ----- Title matches -----
+        contentBinding.existingTitleIntelContainer.removeAllViews();
+        if (story.title != null) {
+            for (Map.Entry<String, Integer> rule : c.title.entrySet()) {
+                if (story.title.contains(rule.getKey())) {
+                    View row = getLayoutInflater().inflate(R.layout.include_intel_row, contentBinding.existingTitleIntelContainer, false);
+                    ((TextView) row.findViewById(R.id.intel_row_label)).setText(rule.getKey());
+                    UIUtils.setupIntelDialogRow(row, c.title, rule.getKey());
+                    contentBinding.existingTitleIntelContainer.addView(row);
+                }
+            }
+        }
+
+        // ----- Text matches -----
+        contentBinding.existingTextIntelContainer.removeAllViews();
+        String storyText = state.getStoryText();
+        if (storyText != null) {
+            String lower = storyText.toLowerCase(Locale.US);
+            for (Map.Entry<String, Integer> rule : c.texts.entrySet()) {
+                if (lower.contains(rule.getKey().toLowerCase(Locale.US))) {
+                    View row = getLayoutInflater().inflate(R.layout.include_intel_row, contentBinding.existingTextIntelContainer, false);
+                    ((TextView) row.findViewById(R.id.intel_row_label)).setText(rule.getKey());
+                    UIUtils.setupIntelDialogRow(row, c.texts, rule.getKey());
+                    contentBinding.existingTextIntelContainer.addView(row);
+                }
+            }
+
+            if (contentBinding.intelTextHeader.getVisibility() == View.GONE &&
+                    contentBinding.existingTextIntelContainer.getChildCount() > 0) {
+                contentBinding.intelTextHeader.setVisibility(View.VISIBLE);
+            }
+        }
+
+        // ----- Tags -----
+        contentBinding.existingTagIntelContainer.removeAllViews();
+        if (story.tags != null && story.tags.length > 0) {
+            contentBinding.intelTagHeader.setVisibility(View.VISIBLE);
+            for (String tag : story.tags) {
+                View row = getLayoutInflater().inflate(R.layout.include_intel_row, contentBinding.existingTagIntelContainer, false);
+                ((TextView) row.findViewById(R.id.intel_row_label)).setText(tag);
+                UIUtils.setupIntelDialogRow(row, c.tags, tag);
+                contentBinding.existingTagIntelContainer.addView(row);
+            }
+        } else {
+            contentBinding.intelTagHeader.setVisibility(View.GONE);
+        }
+
+        // ----- Author -----
+        contentBinding.existingAuthorIntelContainer.removeAllViews();
+        if (!TextUtils.isEmpty(story.authors)) {
+            contentBinding.intelAuthorHeader.setVisibility(View.VISIBLE);
+            View row = getLayoutInflater().inflate(R.layout.include_intel_row, contentBinding.existingAuthorIntelContainer, false);
+            ((TextView) row.findViewById(R.id.intel_row_label)).setText(story.authors);
+            UIUtils.setupIntelDialogRow(row, c.authors, story.authors);
+            contentBinding.existingAuthorIntelContainer.addView(row);
+        } else {
+            contentBinding.intelAuthorHeader.setVisibility(View.GONE);
+        }
+
+        // ----- Feed -----
+        contentBinding.existingFeedIntelContainer.removeAllViews();
+        View rowFeed = getLayoutInflater().inflate(R.layout.include_intel_row, contentBinding.existingFeedIntelContainer, false);
+        ((TextView) rowFeed.findViewById(R.id.intel_row_label)).setText(feedUtils.getFeedTitle(story.feedId));
+        UIUtils.setupIntelDialogRow(rowFeed, c.feeds, story.feedId);
+        contentBinding.existingFeedIntelContainer.addView(rowFeed);
+    }
 }

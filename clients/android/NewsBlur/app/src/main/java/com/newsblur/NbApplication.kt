@@ -14,6 +14,7 @@ import com.newsblur.di.ThumbnailCache
 import com.newsblur.preference.PrefsRepo
 import com.newsblur.util.FileCache
 import com.newsblur.util.Log
+import com.newsblur.util.ReadTimeTracker
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +43,9 @@ class NbApplication :
 
     @Inject
     lateinit var dbHelper: Provider<BlurDatabaseHelper>
+
+    @Inject
+    lateinit var readTimeTracker: Provider<ReadTimeTracker>
 
     override fun onCreate() {
         super<Application>.onCreate()
@@ -87,11 +91,15 @@ class NbApplication :
         super.onStart(owner)
         isAppForeground = true
         foregroundSessionId += 1
+        readTimeTracker.get().isAppActive = true
+        readTimeTracker.get().resumeFromBackground()
     }
 
     override fun onStop(owner: LifecycleOwner) {
         super.onStop(owner)
         isAppForeground = false
+        readTimeTracker.get().isAppActive = false
+        readTimeTracker.get().harvestForBackground()
     }
 
     companion object {

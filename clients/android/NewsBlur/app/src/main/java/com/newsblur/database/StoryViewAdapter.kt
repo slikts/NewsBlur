@@ -32,9 +32,9 @@ import com.newsblur.activity.NbActivity
 import com.newsblur.domain.CustomIcon
 import com.newsblur.domain.Story
 import com.newsblur.util.AppConstants
-import com.newsblur.util.CustomIconRenderer
 import com.newsblur.fragment.StoryIntelTrainerFragment
 import com.newsblur.preference.PrefsRepo
+import com.newsblur.util.CustomIconRenderer
 import com.newsblur.util.FeedSet
 import com.newsblur.util.FeedUtils
 import com.newsblur.util.GestureAction
@@ -449,7 +449,7 @@ class StoryViewAdapter(
             } else if (item.itemId == R.id.menu_intel) {
                 if (story!!.feedId == "0") return true // cannot train on feedless stories
 
-                val intelFrag = StoryIntelTrainerFragment.newInstance(story, fs)
+                val intelFrag = StoryIntelTrainerFragment.newInstance(story, fs, null)
                 intelFrag.show(context.supportFragmentManager, StoryIntelTrainerFragment::class.java.name)
                 return true
             } else if (item.itemId == R.id.menu_go_to_feed) {
@@ -518,6 +518,7 @@ class StoryViewAdapter(
                 GestureAction.GEST_ACTION_UNSAVE -> feedUtils.setStorySaved(story!!, false, context, emptyList(), emptyList())
                 GestureAction.GEST_ACTION_STATISTICS -> feedUtils.openStatistics(context, prefsRepo, story!!.feedId)
                 GestureAction.GEST_ACTION_NONE -> {}
+
                 else -> {}
             }
         }

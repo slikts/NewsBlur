@@ -9,12 +9,12 @@
     <meta property="og:description" content="Choose your plan. From free RSS reading to AI-powered professional news intelligence. 30-day free trial, no credit card required.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://www.newsblur.com{{ request.path }}">
-    <meta property="og:image" content="{{ MEDIA_URL }}img/logo_512.png">
-    <meta name="twitter:card" content="summary_large_image">
+    <meta property="og:image" content="https://www.newsblur.com/media/img/logo_newsblur_512.png">
+    <meta name="twitter:card" content="summary">
     <meta name="twitter:site" content="@newsblur">
     <meta name="twitter:title" content="NewsBlur Pricing - Plans for Every Reader">
     <meta name="twitter:description" content="From free RSS reading to professional news intelligence. Premium from $36/year. 30-day free trial, no credit card required.">
-    <meta name="twitter:image" content="{{ MEDIA_URL }}img/logo_512.png">
+    <meta name="twitter:image" content="https://www.newsblur.com/media/img/logo_newsblur_512.png">
 {% endblock %}
 
 {% block content %}
@@ -46,9 +46,10 @@
                 <li class="NB-7"><div class="NB-pricing-bullet"></div>Custom RSS feeds for saved stories</li>
                 <li class="NB-8"><div class="NB-pricing-bullet"></div>Text view extracts the story</li>
                 <li class="NB-9"><div class="NB-pricing-bullet"></div>Discover related stories and sites</li>
+                <li class="NB-10"><div class="NB-pricing-bullet"></div>Natural language text and image classifiers</li>
             </ul>
             <div class="NB-pricing-tier-actions">
-                <a href="{% url "index" %}" class="NB-pricing-cta NB-pricing-cta-premium">Get Premium</a>
+                <a href="{% url "pricing-premium" %}" class="NB-pricing-cta NB-pricing-cta-premium">Explore Premium <span class="NB-pricing-cta-arrow">&rarr;</span></a>
             </div>
         </div>
 
@@ -75,9 +76,10 @@
                 <li class="NB-11"><div class="NB-pricing-bullet"></div>Filter stories by date range</li>
                 <li class="NB-12"><div class="NB-pricing-bullet"></div>Apply training across a folder</li>
                 <li class="NB-13"><div class="NB-pricing-bullet"></div>Apply training globally</li>
+                <li class="NB-14"><div class="NB-pricing-bullet"></div>Web Feeds from any website, even without RSS</li>
             </ul>
             <div class="NB-pricing-tier-actions">
-                <a href="{% url "index" %}" class="NB-pricing-cta NB-pricing-cta-archive">Get Archive</a>
+                <a href="{% url "pricing-archive" %}" class="NB-pricing-cta NB-pricing-cta-archive">Explore Archive <span class="NB-pricing-cta-arrow">&rarr;</span></a>
             </div>
         </div>
 
@@ -95,12 +97,9 @@
                 <li class="NB-2"><div class="NB-pricing-bullet"></div>All feeds fetched every 5-15 minutes</li>
                 <li class="NB-3"><div class="NB-pricing-bullet"></div>Train stories with regular expressions</li>
                 <li class="NB-4"><div class="NB-pricing-bullet"></div>Priority support</li>
-                <li class="NB-pricing-tier-upcoming-header">Coming soon:</li>
-                <li class="NB-upcoming NB-5"><div class="NB-pricing-bullet"></div>Natural language filters</li>
-                <li class="NB-upcoming NB-6"><div class="NB-pricing-bullet"></div>Natural language search</li>
             </ul>
             <div class="NB-pricing-tier-actions">
-                <a href="{% url "index" %}" class="NB-pricing-cta NB-pricing-cta-pro">Get Pro</a>
+                <a href="{% url "pricing-pro" %}" class="NB-pricing-cta NB-pricing-cta-pro">Explore Pro <span class="NB-pricing-cta-arrow">&rarr;</span></a>
             </div>
         </div>
     </div>

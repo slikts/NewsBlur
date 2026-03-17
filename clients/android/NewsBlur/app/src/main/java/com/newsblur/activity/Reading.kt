@@ -99,6 +99,9 @@ abstract class Reading :
     @IconLoader
     lateinit var iconLoader: ImageLoader
 
+    @Inject
+    lateinit var readTimeTracker: ReadTimeTracker
+
     @JvmField
     var fs: FeedSet? = null
 
@@ -140,6 +143,8 @@ abstract class Reading :
     private lateinit var binding: ActivityReadingBinding
     private lateinit var readingViewModel: ReadingViewModel
     private lateinit var traverseBar: ReadingTraverseBar
+
+    private lateinit var readingBackCallback: OnBackPressedCallback
 
     private var lastBatchFirstUnreadIndex: Int = -1
     private var storyCounts: Int? = null
@@ -303,8 +308,7 @@ abstract class Reading :
      * Overrides on back pressed to use overridden [Reading.finish] method
      */
     private fun setupOnBackPressed() {
-        onBackPressedDispatcher.addCallback(
-            this,
+        readingBackCallback =
             object : OnBackPressedCallback(enabled = true) {
                 override fun handleOnBackStarted(backEvent: BackEventCompat) {
                     predictiveBackInProgress =
@@ -331,8 +335,8 @@ abstract class Reading :
                     predictiveBackInProgress = false
                     finish()
                 }
-            },
-        )
+            }
+        onBackPressedDispatcher.addCallback(this, readingBackCallback)
     }
 
     override fun shouldUseTranslucentTheme(): Boolean = true
@@ -544,6 +548,12 @@ abstract class Reading :
     override fun onPageSelected(position: Int) {
         lifecycleScope.executeAsyncTask(
             doInBackground = {
+                // Harvest read time for previous story
+                readTimeTracker.currentStoryHash?.let { prevHash ->
+                    val seconds = readTimeTracker.getAndResetReadTime(prevHash)
+                    if (seconds > 0) readTimeTracker.queueReadTime(prevHash, seconds)
+                }
+
                 readingAdapter?.let { readingAdapter ->
                     val story = readingAdapter.getStory(position)
                     if (story != null) {
@@ -560,6 +570,11 @@ abstract class Reading :
                     checkStoryCount(position)
                     updateOverlayText()
                     enableOverlays()
+
+                    // Start tracking new story
+                    readingAdapter.getStory(position)?.storyHash?.let {
+                        readTimeTracker.startTracking(it)
+                    }
                 }
             },
         )
@@ -1052,6 +1067,12 @@ abstract class Reading :
         feedUtils.syncStoryAsRead(story, this, readTimesJson)
     }
 
+    fun setReadingBackCallbackEnabled(enabled: Boolean) {
+        if (::readingBackCallback.isInitialized) {
+            readingBackCallback.isEnabled = enabled
+        }
+    }
+
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         if (
             event.actionMasked == MotionEvent.ACTION_DOWN ||
@@ -1066,22 +1087,57 @@ abstract class Reading :
 
     override fun onKeyboardEvent(event: KeyboardEvent) {
         when (event) {
-            KeyboardEvent.NextStory -> nextStory()
-            KeyboardEvent.PreviousStory -> previousStory()
-            KeyboardEvent.NextUnreadStory -> nextUnread()
-            KeyboardEvent.OpenInBrowser -> readingFragment?.openBrowser()
-            KeyboardEvent.OpenStoryTrainer -> readingFragment?.openStoryTrainer()
-            KeyboardEvent.SaveUnsaveStory -> readingFragment?.switchStorySavedState(true)
-            KeyboardEvent.ScrollToComments -> readingFragment?.scrollToComments()
-            KeyboardEvent.ShareStory -> readingFragment?.openShareDialog()
-            KeyboardEvent.ToggleReadUnread -> readingFragment?.switchMarkStoryReadState(true)
-            KeyboardEvent.ToggleTextView -> readingFragment?.switchSelectedViewMode()
-            KeyboardEvent.Tutorial -> readingFragment?.showStoryShortcuts()
-            KeyboardEvent.PageDown ->
-                readingFragment?.scrollVerticallyBy(UIUtils.dp2px(this, VERTICAL_SCROLL_DISTANCE_DP))
+            KeyboardEvent.NextStory -> {
+                nextStory()
+            }
 
-            KeyboardEvent.PageUp ->
+            KeyboardEvent.PreviousStory -> {
+                previousStory()
+            }
+
+            KeyboardEvent.NextUnreadStory -> {
+                nextUnread()
+            }
+
+            KeyboardEvent.OpenInBrowser -> {
+                readingFragment?.openBrowser()
+            }
+
+            KeyboardEvent.OpenStoryTrainer -> {
+                readingFragment?.openStoryTrainer()
+            }
+
+            KeyboardEvent.SaveUnsaveStory -> {
+                readingFragment?.switchStorySavedState(true)
+            }
+
+            KeyboardEvent.ScrollToComments -> {
+                readingFragment?.scrollToComments()
+            }
+
+            KeyboardEvent.ShareStory -> {
+                readingFragment?.openShareDialog()
+            }
+
+            KeyboardEvent.ToggleReadUnread -> {
+                readingFragment?.switchMarkStoryReadState(true)
+            }
+
+            KeyboardEvent.ToggleTextView -> {
+                readingFragment?.switchSelectedViewMode()
+            }
+
+            KeyboardEvent.Tutorial -> {
+                readingFragment?.showStoryShortcuts()
+            }
+
+            KeyboardEvent.PageDown -> {
+                readingFragment?.scrollVerticallyBy(UIUtils.dp2px(this, VERTICAL_SCROLL_DISTANCE_DP))
+            }
+
+            KeyboardEvent.PageUp -> {
                 readingFragment?.scrollVerticallyBy(UIUtils.dp2px(this, -VERTICAL_SCROLL_DISTANCE_DP))
+            }
 
             else -> {}
         }

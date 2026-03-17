@@ -19,6 +19,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import zlib
+from collections import defaultdict
 
 import pytz
 import redis
@@ -53,6 +54,7 @@ from mongoengine.queryset import NotUniqueError, OperationError
 from apps.analyzer.models import (
     MClassifierAuthor,
     MClassifierFeed,
+    MClassifierPrompt,
     MClassifierTag,
     MClassifierText,
     MClassifierTitle,
@@ -70,6 +72,7 @@ from apps.analyzer.models import (
     load_scoped_classifiers,
     sort_classifiers_by_feed,
 )
+from apps.analyzer.tasks import ClassifyStoriesWithPrompt
 from apps.notifications.models import MUserFeedNotification
 from apps.profile.models import MCustomStyling, MDashboardRiver, Profile
 from apps.reader.forms import FeatureForm, LoginForm, SignupForm
@@ -152,8 +155,8 @@ ALLOWED_SUBDOMAINS = [
     "staging3",
     "nb",
 ]
-# Users with expensive river queries that should use lazy per-feed merge to avoid Redis blocking
-RIVER_SLOWDOWN_USERS = [510812, 37596, 22845]
+# Deprecated: lazy merge is now always used for all river loads (no ZUNIONSTORE)
+RIVER_SLOWDOWN_USERS = []
 
 
 def get_subdomain(request):
@@ -473,7 +476,10 @@ def load_feeds(request):
     include_favicons = is_true(request.GET.get("include_favicons", False))
     flat = is_true(request.GET.get("flat", False))
     update_counts = is_true(request.GET.get("update_counts", True))
-    version = int(request.GET.get("v", 1))
+    try:
+        version = int(request.GET.get("v", 1))
+    except (ValueError, TypeError):
+        version = 1
 
     if include_favicons == "false":
         include_favicons = False
@@ -938,6 +944,86 @@ def refresh_feed(request, feed_id):
     return load_single_feed(request, feed_id)
 
 
+def get_prompt_scores_or_queue(user, stories, feed_ids):
+    """Get cached AI prompt classifier scores, queueing uncached stories for async classification.
+
+    Returns dict with:
+      "scores": {story_hash: prompt_score} - aggregate score per story
+      "details": {story_hash: [{"prompt": text, "score": int, "include_images": bool}]}
+    Uncached stories get score 0 and a Celery task is fired to classify them in the background.
+    """
+    empty_result = {"scores": {}, "details": {}}
+    if not stories or not feed_ids:
+        return empty_result
+
+    if not user.profile.can_use_ai_classifiers:
+        return empty_result
+
+    # Quick check: does user have any prompt classifiers?
+    prompt_count = MClassifierPrompt.objects.filter(user_id=user.pk).count()
+    if not prompt_count:
+        return empty_result
+
+    # Get applicable prompts
+    prompts = MClassifierPrompt.get_prompts_for_user(user.pk, feed_ids=feed_ids)
+    feed_prompts = prompts["feed_prompts"]
+    if not feed_prompts:
+        return empty_result
+
+    # Group stories by feed
+    stories_by_feed = defaultdict(list)
+    for story in stories:
+        stories_by_feed[story["story_feed_id"]].append(story)
+
+    # Check cache for all prompts and collect uncached story hashes
+    prompt_scores = {}  # {story_hash: aggregated_score}
+    prompt_details = defaultdict(list)  # {story_hash: [{prompt, score, include_images}]}
+    uncached_hashes = set()
+
+    for feed_id, feed_stories in stories_by_feed.items():
+        story_hashes = [s["story_hash"] for s in feed_stories]
+
+        # Collect prompts that apply to this feed (feed-specific + global)
+        applicable_prompts = []
+        if 0 in feed_prompts:
+            applicable_prompts.extend(feed_prompts[0])
+        if feed_id in feed_prompts:
+            applicable_prompts.extend(feed_prompts[feed_id])
+
+        for prompt in applicable_prompts:
+            prompt_id = str(prompt.id)
+            cached = MClassifierPrompt.get_cached_scores(user.pk, prompt_id, feed_id, story_hashes)
+
+            for sh in story_hashes:
+                if sh in cached:
+                    score = cached[sh]
+                    if score != 0:
+                        # Any non-zero cached score means the prompt matched.
+                        # Apply polarity from classifier_type.
+                        effective_score = 0
+                        if prompt.classifier_type == "focus":
+                            effective_score = 1
+                        elif prompt.classifier_type == "hidden":
+                            effective_score = -1
+                        if effective_score != 0:
+                            prompt_scores[sh] = effective_score
+                            prompt_details[sh].append(
+                                {
+                                    "prompt": prompt.prompt,
+                                    "score": effective_score,
+                                    "include_images": prompt.include_images,
+                                }
+                            )
+                else:
+                    uncached_hashes.add(sh)
+
+    # Queue async classification for uncached stories
+    if uncached_hashes:
+        ClassifyStoriesWithPrompt.delay(user.pk, list(uncached_hashes))
+
+    return {"scores": prompt_scores, "details": dict(prompt_details)}
+
+
 @never_cache
 @json.json_view
 def load_single_feed(request, feed_id):
@@ -1187,6 +1273,9 @@ def load_single_feed(request, feed_id):
 
     user_is_pro = user.profile.is_pro
 
+    # AI prompt classifiers (cached in Redis, async classification for uncached)
+    prompt_data = get_prompt_scores_or_queue(user, stories, feed_ids=[feed_id])
+
     for story in stories:
         # Calculate intelligence BEFORE deleting story content (text classifier needs it)
         story["intelligence"] = {
@@ -1220,7 +1309,9 @@ def load_single_feed(request, feed_id):
                 if user_is_pro
                 else 0
             ),
+            "prompt": prompt_data["scores"].get(story["story_hash"], 0),
         }
+        story["prompt_classifiers"] = prompt_data["details"].get(story["story_hash"], [])
         story["score"] = UserSubscription.score_story(story["intelligence"])
 
         # Apply YouTube captions if user preference is enabled
@@ -1487,7 +1578,10 @@ def load_starred_stories(request):
     highlights = is_true(request.GET.get("highlights", False))
     story_hashes = request.GET.getlist("h") or request.GET.getlist("h[]")
     story_hashes = story_hashes[:100]
-    version = int(request.GET.get("v", 1))
+    try:
+        version = int(request.GET.get("v", 1))
+    except (ValueError, TypeError):
+        version = 1
     now = localtime_for_timezone(datetime.datetime.now(), user.profile.timezone)
     message = None
     order_by = "-" if order == "newest" else ""
@@ -1799,6 +1893,8 @@ def folder_rss_feed(request, user_id, secret_token, unread_filter, folder_slug):
 
     user_sub_folders = get_object_or_404(UserSubscriptionFolders, user=user)
     feed_ids, folder_title = user_sub_folders.feed_ids_under_folder_slug(folder_slug)
+    if not folder_title:
+        raise Http404
 
     usersubs = UserSubscription.subs_for_feeds(user.pk, feed_ids=feed_ids)
     if feed_ids and ((user.profile.is_archive and date_hack_2023) or (not date_hack_2023)):
@@ -2393,6 +2489,9 @@ def load_river_stories__redis(request):
 
     user_is_pro = user.profile.is_pro
 
+    # AI prompt classifiers (cached in Redis, async classification for uncached)
+    prompt_data = get_prompt_scores_or_queue(user, stories, feed_ids=found_feed_ids)
+
     # Look up actual read status for starred stories from Redis
     if read_filter == "starred":
         r2 = redis.Redis(connection_pool=settings.REDIS_STORY_HASH_POOL)
@@ -2459,7 +2558,9 @@ def load_river_stories__redis(request):
                 if user_is_pro
                 else 0
             ),
+            "prompt": prompt_data["scores"].get(story["story_hash"], 0),
         }
+        story["prompt_classifiers"] = prompt_data["details"].get(story["story_hash"], [])
         story["score"] = UserSubscription.score_story(story["intelligence"])
 
         # Apply YouTube captions if user preference is enabled
@@ -2860,6 +2961,31 @@ def mark_story_hashes_as_read(request):
         story_hashes = request.POST.getlist("story_hash") or request.POST.getlist("story_hash[]")
     except UnreadablePostError:
         return dict(code=-1, message="Missing `story_hash` list parameter.")
+
+    # Filter out story hashes already marked as read to avoid redundant work.
+    # Some clients (e.g. NetNewsWire) re-send all read hashes on every sync cycle.
+    if story_hashes:
+        rsh = redis.Redis(connection_pool=settings.REDIS_STORY_HASH_POOL)
+        all_read_key = "RS:%s" % request.user.pk
+        p = rsh.pipeline()
+        for story_hash in story_hashes:
+            p.sismember(all_read_key, story_hash)
+        already_read = p.execute()
+        original_count = len(story_hashes)
+        story_hashes = [sh for sh, is_read in zip(story_hashes, already_read) if not is_read]
+        skipped_count = original_count - len(story_hashes)
+        if skipped_count > 0 and not story_hashes:
+            logging.user(
+                request,
+                "~FYRead ~SB%s~SN already read stories, skipping" % skipped_count,
+            )
+            return dict(code=1, story_hashes=[], feed_ids=[], friend_user_ids=[])
+        elif skipped_count > 0:
+            logging.user(
+                request,
+                "~FYSkipped ~SB%s~SN/%s already read, processing %s new"
+                % (skipped_count, original_count, len(story_hashes)),
+            )
 
     # Handle read times for trending feeds feature
     read_times_raw = request.POST.get("read_times", "{}")
@@ -3312,7 +3438,7 @@ def _parse_user_info(user):
 @json.json_view
 def add_url(request):
     code = 0
-    url = request.POST["url"]
+    url = request.POST.get("url", "")
     folder = request.POST.get("folder", "").replace("river:", "")
     new_folder = request.POST.get("new_folder", "").replace("river:", "")
     auto_active = is_true(request.POST.get("auto_active", 1))
@@ -3482,13 +3608,16 @@ def delete_feeds_by_folder(request):
 @ajax_login_required
 @json.json_view
 def rename_feed(request):
-    feed = get_object_or_404(Feed, pk=int(request.POST["feed_id"]))
+    feed_id = request.POST.get("feed_id")
+    feed_title = request.POST.get("feed_title")
+    if not feed_id or not feed_title:
+        return dict(code=-1, message="Missing feed_id or feed_title")
+
+    feed = get_object_or_404(Feed, pk=int(feed_id))
     try:
         user_sub = UserSubscription.objects.get(user=request.user, feed=feed)
     except UserSubscription.DoesNotExist:
         return dict(code=-1, message=f"You are not subscribed to {feed.feed_title}")
-
-    feed_title = request.POST["feed_title"]
 
     logging.user(request, "~FRRenaming feed '~SB%s~SN' to: ~SB%s" % (feed.feed_title, feed_title))
 
@@ -4035,12 +4164,22 @@ def all_classifiers(request):
     classifier_texts = list(MClassifierText.objects.filter(user_id=user.pk, score__ne=0))
     classifier_feeds = list(MClassifierFeed.objects.filter(user_id=user.pk, score__ne=0))
     classifier_urls = list(MClassifierUrl.objects.filter(user_id=user.pk, score__ne=0))
+    classifier_prompts = list(MClassifierPrompt.objects.filter(user_id=user.pk))
 
     # Group classifiers by feed_id
     from collections import defaultdict
 
     classifiers_by_feed = defaultdict(
-        lambda: {"titles": [], "authors": [], "tags": [], "texts": [], "feeds": [], "urls": []}
+        lambda: {
+            "titles": [],
+            "authors": [],
+            "tags": [],
+            "texts": [],
+            "feeds": [],
+            "urls": [],
+            "prompts": [],
+            "image_prompts": [],
+        }
     )
 
     # Separate scoped classifiers (global/folder) from feed-scoped ones
@@ -4111,6 +4250,14 @@ def all_classifiers(request):
             scoped_classifiers["urls"].append(entry)
         else:
             classifiers_by_feed[c.feed_id]["urls"].append(entry)
+    for c in classifier_prompts:
+        score = 1 if c.classifier_type == "focus" else -1
+        key = "image_prompts" if c.include_images else "prompts"
+        entry = {
+            "prompt": c.prompt,
+            "score": score,
+        }
+        classifiers_by_feed[c.feed_id][key].append(entry)
 
     # Batch fetch all feeds with classifiers to avoid N+1 queries
     all_classifier_feed_ids = set(classifiers_by_feed.keys())
@@ -4168,6 +4315,8 @@ def all_classifiers(request):
         + len(c["texts"])
         + len(c["feeds"])
         + len(c["urls"])
+        + len(c["prompts"])
+        + len(c["image_prompts"])
         for c in classifiers_by_feed.values()
     )
 

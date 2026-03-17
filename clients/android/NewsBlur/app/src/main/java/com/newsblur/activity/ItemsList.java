@@ -159,6 +159,21 @@ public abstract class ItemsList extends NbActivity implements ReadingActionListe
             new ActivityResultContracts.StartActivityForResult(), this::handleReadingActivityResult
     );
 
+    private final OnBackPressedCallback searchBackCallback =
+            new OnBackPressedCallback(false) {
+                @Override
+                public void handleOnBackPressed() {
+                    if (binding.itemlistSearchQuery.getVisibility() == View.VISIBLE) {
+                        binding.itemlistSearchQuery.setVisibility(View.GONE);
+                        binding.itemlistSearchQuery.setText("");
+                        checkSearchQuery();
+
+                        // allow system to own back again
+                        setEnabled(false);
+                    }
+                }
+            };
+
     @Override
     protected void onCreate(Bundle bundle) {
         Trace.beginSection("ItemsListOnCreate");
@@ -202,10 +217,10 @@ public abstract class ItemsList extends NbActivity implements ReadingActionListe
         itemSetFragment = (ItemSetFragment) fragmentManager.findFragmentByTag(ItemSetFragment.class.getName());
         if (itemSetFragment == null) {
             itemSetFragment = ItemSetFragment.newInstance();
-			FragmentTransaction transaction = fragmentManager.beginTransaction();
-			transaction.add(R.id.activity_itemlist_container, itemSetFragment, ItemSetFragment.class.getName());
-			transaction.commitNow();
-		}
+            FragmentTransaction transaction = fragmentManager.beginTransaction();
+            transaction.add(R.id.activity_itemlist_container, itemSetFragment, ItemSetFragment.class.getName());
+            transaction.commitNow();
+        }
 
         String activeSearchQuery;
         if (bundle != null) {
@@ -229,6 +244,7 @@ public abstract class ItemsList extends NbActivity implements ReadingActionListe
                 }
                 return false;
             }
+            return false;
         });
         setupStoryHeader();
         refreshStoryHeaderControls();
@@ -998,7 +1014,7 @@ public abstract class ItemsList extends NbActivity implements ReadingActionListe
             binding.footerFleuron.getRoot().setVisibility(View.GONE);
             binding.footerFleuron.containerSubscribe.setOnClickListener(null);
         }
-	    transaction.commitNow();
+        transaction.commitNow();
     }
 
     public void restartReadingSession() {

@@ -180,6 +180,7 @@ class MUserSearch(mongo.Document):
             discover_chunks = [
                 IndexSubscriptionsChunkForDiscover.s(feed_ids=feed_id_chunk, user_id=self.user_id).set(
                     queue="discover_indexer",
+                    soft_time_limit=settings.MAX_SECONDS_COMPLETE_ARCHIVE_FETCH - 60,
                     time_limit=settings.MAX_SECONDS_COMPLETE_ARCHIVE_FETCH,
                 )
                 for feed_id_chunk in feed_id_chunks
@@ -1284,12 +1285,6 @@ class SearchFeed:
         - Wildcard matching on link
         - function_score to boost results by subscriber count while preserving relevance
         """
-        try:
-            cls.ES().indices.flush(index=cls.index_name())
-        except elasticsearch.exceptions.NotFoundError as e:
-            logging.debug(f" ***> ~FRNo search server available: {e}")
-            return []
-
         # Escape all Elasticsearch query_string reserved characters
         escaped_text = re.sub(r'([+\-=&|!(){}\[\]^"~*?:\\/])', r"\\\1", text)
 
@@ -1350,8 +1345,11 @@ class SearchFeed:
         }
         try:
             results = cls.ES().search(body=body, index=cls.index_name(), doc_type=cls.doc_type())
-        except elasticsearch.exceptions.ConnectionError as e:
+        except (elasticsearch.exceptions.ConnectionError, elasticsearch.exceptions.ConnectionTimeout) as e:
             logging.error(" ***> ~FRNo search server available for querying: %s" % e)
+            return []
+        except elasticsearch.exceptions.NotFoundError as e:
+            logging.debug(f" ***> ~FRSearch index not found: {e}")
             return []
         except elasticsearch.exceptions.RequestError as e:
             logging.debug(" ***> ~FRSearch query error: %s" % e)
@@ -1365,12 +1363,6 @@ class SearchFeed:
 
     @classmethod
     def vector_query(cls, query_vector, offset=0, max_results=10, feed_ids_to_exclude=None):
-        try:
-            cls.ES().indices.flush(index=cls.index_name())
-        except elasticsearch.exceptions.NotFoundError as e:
-            logging.debug(f" ***> ~FRNo search server available: {e}")
-            return []
-
         must_not_clauses = []
         if feed_ids_to_exclude:
             must_not_clauses.append({"terms": {"feed_id": feed_ids_to_exclude}})
@@ -1395,8 +1387,11 @@ class SearchFeed:
         }
         try:
             results = cls.ES().search(body=body, index=cls.index_name(), doc_type=cls.doc_type())
-        except elasticsearch.exceptions.ConnectionError as e:
+        except (elasticsearch.exceptions.ConnectionError, elasticsearch.exceptions.ConnectionTimeout) as e:
             logging.error(" ***> ~FRNo search server available for querying: %s" % e)
+            return []
+        except elasticsearch.exceptions.NotFoundError as e:
+            logging.debug(f" ***> ~FRSearch index not found: {e}")
             return []
         except elasticsearch.exceptions.RequestError as e:
             logging.debug(" ***> ~FRSearch query error: %s" % e)
@@ -1503,18 +1498,15 @@ class SearchFeed:
     @classmethod
     def fetch_feed_content_vector(cls, feed_id):
         # Fetch the content vector from ES for the specified feed_id
-        try:
-            cls.ES().indices.flush(index=cls.index_name())
-        except (elasticsearch.exceptions.NotFoundError, elasticsearch.exceptions.ConnectionError) as e:
-            logging.debug(f" ***> ~FRNo search server available: {e}")
-            return []
-
         body = {"query": {"term": {"feed_id": feed_id}}}
 
         try:
             results = cls.ES().search(body=body, index=cls.index_name(), doc_type=cls.doc_type())
-        except elasticsearch.exceptions.ConnectionError as e:
+        except (elasticsearch.exceptions.ConnectionError, elasticsearch.exceptions.ConnectionTimeout) as e:
             logging.error(" ***> ~FRNo search server available for querying: %s" % e)
+            return []
+        except elasticsearch.exceptions.NotFoundError as e:
+            logging.debug(f" ***> ~FRSearch index not found: {e}")
             return []
         except elasticsearch.exceptions.RequestError as e:
             logging.debug(" ***> ~FRSearch query error: %s" % e)

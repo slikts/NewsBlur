@@ -2,6 +2,7 @@ package com.newsblur.util
 
 import android.os.SystemClock
 import com.google.gson.Gson
+import org.json.JSONObject
 
 class ReadTimeTracker(
     private val nowMillis: () -> Long = SystemClock::elapsedRealtime,
@@ -11,6 +12,9 @@ class ReadTimeTracker(
     private val readTimes = mutableMapOf<String, Int>()
     private val queuedReadTimes = linkedMapOf<String, Int>()
     private var lastActivityMillis: Long = nowMillis()
+    private var backgroundedStoryHash: String? = null
+
+    var isAppActive: Boolean = true
 
     @get:Synchronized
     var currentStoryHash: String? = null
@@ -37,6 +41,7 @@ class ReadTimeTracker(
     @Synchronized
     fun tick() {
         val storyHash = currentStoryHash ?: return
+        if (!isAppActive) return
         if (nowMillis() - lastActivityMillis >= idleThresholdMillis) return
 
         readTimes[storyHash] = (readTimes[storyHash] ?: 0) + 1
@@ -80,6 +85,34 @@ class ReadTimeTracker(
         val readTimesToSend = LinkedHashMap(queuedReadTimes)
         queuedReadTimes.clear()
         return gson.toJson(readTimesToSend)
+    }
+
+    @Synchronized
+    fun restoreQueuedReadTimes(json: String) {
+        val obj = JSONObject(json)
+        for (key in obj.keys()) {
+            queuedReadTimes[key] = (queuedReadTimes[key] ?: 0) + obj.getInt(key)
+        }
+    }
+
+    /**
+     * Harvest accumulated time and flush, but remember which story was being
+     * tracked so [resumeFromBackground] can restart the timer.
+     */
+    @Synchronized
+    fun harvestForBackground() {
+        backgroundedStoryHash = currentStoryHash
+        harvestCurrentStory()
+    }
+
+    /**
+     * Restart tracking for the story that was active when the app went to background.
+     */
+    @Synchronized
+    fun resumeFromBackground() {
+        val hash = backgroundedStoryHash
+        backgroundedStoryHash = null
+        hash?.let { startTracking(it) }
     }
 
     companion object {

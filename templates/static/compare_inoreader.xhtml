@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load utils_tags %}
-{% block bodyclass %}NB-static NB-static-compare{% endblock %}
+{% block bodyclass %}NB-static NB-static-compare NB-static-compare-inoreader{% endblock %}
 {% block title %}NewsBlur vs Inoreader - RSS Reader Comparison{% endblock %}
 {% block nav_title %}NewsBlur vs Inoreader{% endblock %}
 {% block head %}
@@ -9,12 +9,12 @@
     <meta property="og:description" content="A detailed comparison of NewsBlur and Inoreader. Intelligence training, AI features, web feeds, pricing, and open source.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://www.newsblur.com{{ request.path }}">
-    <meta property="og:image" content="{{ MEDIA_URL }}img/logo_512.png">
-    <meta name="twitter:card" content="summary_large_image">
+    <meta property="og:image" content="https://www.newsblur.com/media/img/logo_newsblur_512.png">
+    <meta name="twitter:card" content="summary">
     <meta name="twitter:site" content="@newsblur">
     <meta name="twitter:title" content="NewsBlur vs Inoreader - Which RSS Reader Is Right for You?">
     <meta name="twitter:description" content="Compare NewsBlur and Inoreader. Intelligence training, AI features, web feeds, pricing, and open source.">
-    <meta name="twitter:image" content="{{ MEDIA_URL }}img/logo_512.png">
+    <meta name="twitter:image" content="https://www.newsblur.com/media/img/logo_newsblur_512.png">
 {% endblock %}
 
 {% block content %}
@@ -173,10 +173,7 @@
 
     {% include "static/_compare_links.xhtml" %}
 
-    <div class="NB-compare-bottom-cta">
-        <a href="{% url "pricing" %}" class="NB-pricing-cta NB-pricing-cta-pro">See NewsBlur plans</a>
-        <a href="{% url "index" %}" class="NB-pricing-cta NB-pricing-cta-free">Try NewsBlur free</a>
-    </div>
+    {% include "static/_feature_crosslinks.xhtml" %}
 
 </div>
 

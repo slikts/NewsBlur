@@ -220,6 +220,12 @@ class SubscriptionManagerImpl(
                     .newBuilder()
                     .setProductDetailsParamsList(productDetailsParamsList)
 
+            // Set obfuscated account ID for server-side user mapping via RTDN
+            val userId = prefRepository.getUserId()
+            if (!userId.isNullOrEmpty()) {
+                billingFlowParamsBuilder.setObfuscatedAccountId(userId)
+            }
+
             // check if there is an active subscription
             val activeSubscription = getActiveSubscriptionAsync().await()
             activeSubscription?.let {
@@ -264,14 +270,11 @@ class SubscriptionManagerImpl(
                 }
             }
 
+            // Always send receipt to server for active Play Store subscriptions.
+            // Server deduplicates by order_id, so this safely handles renewals
+            // that the server missed (e.g. user didn't open app after renewal).
             activePlayStoreSubscription?.let { purchase ->
-                if (purchase.isPremiumSub() && !isPremium) {
-                    saveReceipt(purchase)
-                } else if (purchase.isArchiveSub() && !isArchive) {
-                    saveReceipt(purchase)
-                } else if (purchase.isProSub() && !isPro) {
-                    saveReceipt(purchase)
-                }
+                saveReceipt(purchase)
             }
         }
 
@@ -281,7 +284,7 @@ class SubscriptionManagerImpl(
         Log.d(this, "saveReceipt: ${purchase.orderId}")
         scope.executeAsyncTask(
             doInBackground = {
-                userApi.saveReceipt(purchase.orderId, purchase.products.first())
+                userApi.saveReceipt(purchase.orderId, purchase.products.first(), purchase.purchaseToken)
             },
             onPostExecute = {
                 if (it != null && !it.isError) {

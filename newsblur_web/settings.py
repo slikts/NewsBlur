@@ -63,6 +63,7 @@ YOUTUBE_API_KEY = "YOUR_YOUTUBE_API_KEY"
 IMAGES_SECRET_KEY = "YOUR_IMAGES_SECRET_KEY"
 DOCKERBUILD = os.getenv("DOCKERBUILD")
 REDIS_USER = None
+REDIS_STORY_SECONDARY = None
 FLASK_SENTRY_DSN = None
 
 # APNS settings for token-based authentication
@@ -132,6 +133,7 @@ MIDDLEWARE = (
     "django.middleware.common.CommonMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.profile.middleware.AttackBanMiddleware",
     "apps.profile.middleware.TimingMiddleware",
     "apps.profile.middleware.LastSeenMiddleware",
     "apps.profile.middleware.UserAgentBanMiddleware",
@@ -387,8 +389,15 @@ STRIPE_SECRET = "YOUR-SECRET-API-KEY"
 STRIPE_PUBLISHABLE = "YOUR-PUBLISHABLE-API-KEY"
 ZEBRA_ENABLE_APP = True
 
+# Stripe Metered Billing for AI Classifiers
+STRIPE_PRICE_TEXT_CLASSIFICATION = ""
+STRIPE_PRICE_IMAGE_CLASSIFICATION = ""
+
 PAYPAL_API_CLIENTID = "YOUR-PAYPAL-API-CLIENTID"
 PAYPAL_API_SECRET = "YOUR-PAYPAL-API-SECRET"
+
+GOOGLE_PLAY_PACKAGE_NAME = "com.newsblur"
+GOOGLE_PLAY_SERVICE_ACCOUNT_INFO = None
 
 # ==========
 # = Celery =
@@ -928,6 +937,16 @@ REDIS_STORY_HASH_TEMP_POOL = redis.ConnectionPool(
 REDIS_STORY_HASH_POOL = redis.ConnectionPool(
     host=REDIS_STORY["host"], port=REDIS_STORY_PORT, db=1, decode_responses=True
 )
+# Replica pool for read-heavy background tasks (clustering). Falls back to primary if no secondary configured.
+if REDIS_STORY_SECONDARY:
+    REDIS_STORY_HASH_REPLICA_POOL = redis.ConnectionPool(
+        host=REDIS_STORY_SECONDARY["host"],
+        port=REDIS_STORY_SECONDARY.get("port", REDIS_STORY_PORT),
+        db=1,
+        decode_responses=True,
+    )
+else:
+    REDIS_STORY_HASH_REPLICA_POOL = REDIS_STORY_HASH_POOL
 REDIS_FEED_READ_POOL = redis.ConnectionPool(
     host=REDIS_SESSIONS["host"], port=REDIS_SESSION_PORT, db=1, decode_responses=True
 )

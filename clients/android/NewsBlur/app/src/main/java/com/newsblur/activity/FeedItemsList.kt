@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.fragment.app.DialogFragment
-import com.google.android.gms.tasks.Task
 import com.google.android.play.core.review.ReviewInfo
 import com.google.android.play.core.review.ReviewManager
 import com.google.android.play.core.review.ReviewManagerFactory
@@ -80,7 +79,7 @@ class FeedItemsList : ItemsList() {
         ) {
             FeedItemsBackAction.LAUNCH_REVIEW -> {
                 val flow = reviewManager!!.launchReviewFlow(this@FeedItemsList, reviewInfo!!)
-                flow.addOnCompleteListener { _: Task<Void?>? ->
+                flow.addOnCompleteListener { _ ->
                     prefsRepo.setInAppReviewed()
                     finish()
                 }
@@ -154,7 +153,9 @@ class FeedItemsList : ItemsList() {
                 true
             }
 
-            else -> false
+            else -> {
+                false
+            }
         }
     }
 

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load utils_tags %}
-{% block bodyclass %}NB-static NB-static-compare{% endblock %}
+{% block bodyclass %}NB-static NB-static-compare NB-static-alt-feedly{% endblock %}
 {% block title %}Feedly Alternative — Switch to NewsBlur for Less{% endblock %}
 {% block nav_title %}Feedly Alternative{% endblock %}
 {% block head %}
@@ -9,12 +9,12 @@
     <meta property="og:description" content="NewsBlur: intelligence training, AI features, open source, and half the price of Feedly. Import your OPML and switch in seconds.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://www.newsblur.com{{ request.path }}">
-    <meta property="og:image" content="{{ MEDIA_URL }}img/logo_512.png">
-    <meta name="twitter:card" content="summary_large_image">
+    <meta property="og:image" content="https://www.newsblur.com/media/img/logo_newsblur_512.png">
+    <meta name="twitter:card" content="summary">
     <meta name="twitter:site" content="@newsblur">
     <meta name="twitter:title" content="Feedly Alternative — Switch to NewsBlur">
     <meta name="twitter:description" content="Intelligence training, AI features, open source, and half the price of Feedly. Import your feeds in seconds.">
-    <meta name="twitter:image" content="{{ MEDIA_URL }}img/logo_512.png">
+    <meta name="twitter:image" content="https://www.newsblur.com/media/img/logo_newsblur_512.png">
 {% endblock %}
 
 {% block content %}
@@ -63,10 +63,7 @@
 
     {% include "static/_compare_links.xhtml" %}
 
-    <div class="NB-compare-bottom-cta">
-        <a href="{% url "compare-feedly" %}" class="NB-pricing-cta NB-pricing-cta-pro">See the full comparison</a>
-        <a href="{% url "index" %}" class="NB-pricing-cta NB-pricing-cta-free">Try NewsBlur free</a>
-    </div>
+    {% include "static/_feature_crosslinks.xhtml" %}
 
 </div>
 

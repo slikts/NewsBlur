@@ -143,6 +143,16 @@ class LoginRegisterViewModel
             _uiState.value = _uiState.value.copy(errorMessage = null)
         }
 
+        fun getCustomServerCaPem() = prefsRepo.getCustomServerCaPem()
+
+        fun saveCustomServerCaPem(pem: String) {
+            prefsRepo.saveCustomServerCaPem(pem)
+        }
+
+        fun clearCustomServerCaPem() {
+            prefsRepo.clearCustomServerCaPem()
+        }
+
         data class UiState(
             val mode: AuthMode = AuthMode.SignIn,
             val phase: AuthPhase = AuthPhase.Idle,
