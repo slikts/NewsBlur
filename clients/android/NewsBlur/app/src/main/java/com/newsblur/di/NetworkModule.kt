@@ -10,6 +10,8 @@ import com.google.gson.GsonBuilder
 import com.newsblur.domain.Story
 import com.newsblur.network.AuthApi
 import com.newsblur.network.AuthApiImpl
+import com.newsblur.network.AskAiApi
+import com.newsblur.network.AskAiApiImpl
 import com.newsblur.network.FeedApi
 import com.newsblur.network.FeedApiImpl
 import com.newsblur.network.FolderApi
@@ -32,7 +34,6 @@ import com.newsblur.util.AppConstants.READING_IMAGES_PATH
 import com.newsblur.util.AppConstants.READING_RES_PATH
 import com.newsblur.util.FileCache
 import com.newsblur.util.NetworkUtils
-import com.newsblur.util.ReadTimeTracker
 import com.newsblur.web.WebImagesPathHandler
 import dagger.Module
 import dagger.Provides
@@ -103,8 +104,8 @@ object NetworkModule {
         NetworkClientImpl(
             context = context,
             client = apiOkHttpClient,
-            prefsRepo = prefsRepo,
             initialUserAgent = customUserAgent,
+            prefsRepo = prefsRepo,
         )
 
     @Singleton
@@ -114,6 +115,13 @@ object NetworkModule {
         networkClient: NetworkClient,
         prefsRepo: PrefsRepo,
     ): AuthApi = AuthApiImpl(gson, networkClient, prefsRepo)
+
+    @Singleton
+    @Provides
+    fun provideAskAiApi(
+        gson: Gson,
+        networkClient: NetworkClient,
+    ): AskAiApi = AskAiApiImpl(gson, networkClient)
 
     @Singleton
     @Provides
@@ -133,16 +141,10 @@ object NetworkModule {
 
     @Singleton
     @Provides
-    fun provideReadTimeTracker(networkClient: NetworkClient): ReadTimeTracker =
-        ReadTimeTracker(networkClient)
-
-    @Singleton
-    @Provides
     fun provideStoryApi(
         gson: Gson,
         networkClient: NetworkClient,
-        readTimeTracker: ReadTimeTracker,
-    ): StoryApi = StoryApiImpl(gson, networkClient, readTimeTracker)
+    ): StoryApi = StoryApiImpl(gson, networkClient)
 
     @Singleton
     @Provides
