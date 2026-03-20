@@ -9,12 +9,12 @@
     <meta property="og:description" content="Follow RSS feeds, train stories with intelligence filters, and read smarter. Free on web, iOS, and Android. Open source.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://www.newsblur.com{{ request.path }}">
-    <meta property="og:image" content="{{ MEDIA_URL }}img/logo_512.png">
+    <meta property="og:image" content="https://www.newsblur.com/media/img/welcome/welcome-mac.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@newsblur">
     <meta name="twitter:title" content="NewsBlur - A Personal News Reader">
     <meta name="twitter:description" content="Follow RSS feeds, train stories with intelligence filters, and read smarter. Free on web, iOS, and Android. Open source.">
-    <meta name="twitter:image" content="{{ MEDIA_URL }}img/logo_512.png">
+    <meta name="twitter:image" content="https://www.newsblur.com/media/img/welcome/welcome-mac.png">
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -50,6 +50,7 @@
 {% block bodyclass %}NB-welcome{% endblock %}
 
 {% block header %}
+    <script>document.body.style.backgroundColor='#c4a870';if(document.body.classList.contains('NB-dark'))document.body.style.backgroundColor='#1a2525';</script>
     {% render_feeds_skeleton %}
 {% endblock header %}
 
@@ -413,6 +414,7 @@
                         <li class="NB-7"><div class="NB-pricing-bullet"></div>Custom RSS feeds for saved stories</li>
                         <li class="NB-8"><div class="NB-pricing-bullet"></div>Text view extracts the story</li>
                         <li class="NB-9"><div class="NB-pricing-bullet"></div>Discover related stories and sites</li>
+                        <li class="NB-10"><div class="NB-pricing-bullet"></div>Natural language text and image classifiers</li>
                     </ul>
                 </div>
 
@@ -427,19 +429,20 @@
                     <ul class="NB-pricing-tier-features">
                         <li class="NB-pricing-tier-includes">Everything in Premium, plus:</li>
                         <li class="NB-1"><div class="NB-pricing-bullet"></div>Follow up to 4,096 sites</li>
-                        <li class="NB-2"><div class="NB-pricing-bullet"></div>Choose when stories are marked as read</li>
-                        <li class="NB-3"><div class="NB-pricing-bullet"></div>Customize auto-read by site or folder</li>
-                        <li class="NB-4"><div class="NB-pricing-bullet"></div>Every story archived and searchable forever</li>
-                        <li class="NB-5"><div class="NB-pricing-bullet"></div>Feeds back-filled for complete archive</li>
-                        <li class="NB-6"><div class="NB-pricing-bullet"></div>Train stories on full text content</li>
-                        <li class="NB-7"><div class="NB-pricing-bullet"></div>Discover related stories across your archive</li>
-                        <li class="NB-8"><div class="NB-pricing-bullet"></div>Export trained stories from folders</li>
-                        <li class="NB-9"><div class="NB-pricing-bullet"></div>Stories can stay unread forever</li>
-                        <li class="NB-10"><div class="NB-pricing-bullet"></div>Ask AI questions about stories</li>
-                        <li class="NB-11"><div class="NB-pricing-bullet"></div>Filter stories by date range</li>
-                        <li class="NB-12"><div class="NB-pricing-bullet"></div>Apply training across a folder</li>
-                        <li class="NB-13"><div class="NB-pricing-bullet"></div>Apply training globally</li>
-                        <li class="NB-14"><div class="NB-pricing-bullet"></div>Web Feeds from any website, even without RSS</li>
+                        <li class="NB-2"><div class="NB-pricing-bullet"></div>Web Feeds from any website, even without RSS</li>
+                        <li class="NB-3"><div class="NB-pricing-bullet"></div>Cluster duplicate stories across all your feeds</li>
+                        <li class="NB-4"><div class="NB-pricing-bullet"></div>Choose when stories are marked as read</li>
+                        <li class="NB-5"><div class="NB-pricing-bullet"></div>Customize auto-read by site or folder</li>
+                        <li class="NB-6"><div class="NB-pricing-bullet"></div>Every story archived and searchable forever</li>
+                        <li class="NB-7"><div class="NB-pricing-bullet"></div>Feeds back-filled for complete archive</li>
+                        <li class="NB-8"><div class="NB-pricing-bullet"></div>Train stories on full text content</li>
+                        <li class="NB-9"><div class="NB-pricing-bullet"></div>Discover related stories across your archive</li>
+                        <li class="NB-10"><div class="NB-pricing-bullet"></div>Export trained stories from folders</li>
+                        <li class="NB-11"><div class="NB-pricing-bullet"></div>Stories can stay unread forever</li>
+                        <li class="NB-12"><div class="NB-pricing-bullet"></div>Ask AI questions about stories</li>
+                        <li class="NB-13"><div class="NB-pricing-bullet"></div>Filter stories by date range</li>
+                        <li class="NB-14"><div class="NB-pricing-bullet"></div>Apply training across a folder</li>
+                        <li class="NB-15"><div class="NB-pricing-bullet"></div>Apply training globally</li>
                     </ul>
                 </div>
 
@@ -457,9 +460,6 @@
                         <li class="NB-2"><div class="NB-pricing-bullet"></div>All feeds fetched every 5-15 minutes</li>
                         <li class="NB-3"><div class="NB-pricing-bullet"></div>Train stories with regular expressions</li>
                         <li class="NB-4"><div class="NB-pricing-bullet"></div>Priority support</li>
-                        <li class="NB-pricing-tier-upcoming-header">Coming soon:</li>
-                        <li class="NB-upcoming NB-5"><div class="NB-pricing-bullet"></div>Natural language filters</li>
-                        <li class="NB-upcoming NB-6"><div class="NB-pricing-bullet"></div>Natural language search</li>
                     </ul>
                 </div>
             </div>
@@ -558,12 +558,46 @@
                     See all frequently asked questions <span class="NB-banner-arrow">&rarr;</span>
                 </a>
             </div>
+            <div class="NB-welcome-compare-header">
+                <div class="NB-welcome-compare-rule"></div>
+                <span class="NB-welcome-compare-label">Compare</span>
+                <div class="NB-welcome-compare-rule"></div>
+            </div>
+            <div class="NB-welcome-compare-versus">
+                <a href="{% url "compare-feedly" %}" class="NB-compare-vs-link">
+                    <span class="NB-compare-vs-tag">vs</span>
+                    <span class="NB-compare-vs-name">Feedly</span>
+                </a>
+                <a href="{% url "compare-inoreader" %}" class="NB-compare-vs-link">
+                    <span class="NB-compare-vs-tag">vs</span>
+                    <span class="NB-compare-vs-name">Inoreader</span>
+                </a>
+                <a href="{% url "compare-readwise" %}" class="NB-compare-vs-link">
+                    <span class="NB-compare-vs-tag">vs</span>
+                    <span class="NB-compare-vs-name">Readwise Reader</span>
+                </a>
+                <a href="{% url "compare-the-old-reader" %}" class="NB-compare-vs-link">
+                    <span class="NB-compare-vs-tag">vs</span>
+                    <span class="NB-compare-vs-name">The Old Reader</span>
+                </a>
+                <a href="{% url "compare-feedbin" %}" class="NB-compare-vs-link">
+                    <span class="NB-compare-vs-tag">vs</span>
+                    <span class="NB-compare-vs-name">Feedbin</span>
+                </a>
+            </div>
+            <div class="NB-welcome-compare-alts">
+                <a href="{% url "alt-feedly" %}">Feedly Alternative</a>
+                <a href="{% url "alt-google-reader" %}">Google Reader Alternative</a>
+                <a href="{% url "alt-open-source" %}">Open Source RSS</a>
+                <a href="{% url "alt-inoreader" %}">Inoreader Alternative</a>
+                <a href="{% url "alt-self-hosted" %}">Self-Hosted RSS</a>
+            </div>
         </div>
     </div>
 
     <div class="NB-welcome-testimonials">
         <div class="NB-testimonials-heading">
-            <h2>People &#10084;&#65039; NewsBlur</h2>
+            <h2>Kind words people say about NewsBlur</h2>
             <div class="NB-testimonials-nav">
                 <button type="button" class="NB-testimonials-nav-btn NB-testimonials-nav-prev" aria-label="Previous page">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1675,45 +1709,6 @@
         <div class="NB-testimonials-fade NB-testimonials-fade-right"></div>
     </div>
 
-    <div class="NB-welcome-compare">
-        <div class="NB-inner">
-            <div class="NB-welcome-compare-header">
-                <div class="NB-welcome-compare-rule"></div>
-                <span class="NB-welcome-compare-label">Compare</span>
-                <div class="NB-welcome-compare-rule"></div>
-            </div>
-            <div class="NB-welcome-compare-versus">
-                <a href="{% url "compare-feedly" %}" class="NB-compare-vs-link">
-                    <span class="NB-compare-vs-tag">vs</span>
-                    <span class="NB-compare-vs-name">Feedly</span>
-                </a>
-                <a href="{% url "compare-inoreader" %}" class="NB-compare-vs-link">
-                    <span class="NB-compare-vs-tag">vs</span>
-                    <span class="NB-compare-vs-name">Inoreader</span>
-                </a>
-                <a href="{% url "compare-readwise" %}" class="NB-compare-vs-link">
-                    <span class="NB-compare-vs-tag">vs</span>
-                    <span class="NB-compare-vs-name">Readwise Reader</span>
-                </a>
-                <a href="{% url "compare-the-old-reader" %}" class="NB-compare-vs-link">
-                    <span class="NB-compare-vs-tag">vs</span>
-                    <span class="NB-compare-vs-name">The Old Reader</span>
-                </a>
-                <a href="{% url "compare-feedbin" %}" class="NB-compare-vs-link">
-                    <span class="NB-compare-vs-tag">vs</span>
-                    <span class="NB-compare-vs-name">Feedbin</span>
-                </a>
-            </div>
-            <div class="NB-welcome-compare-alts">
-                <a href="{% url "alt-feedly" %}">Feedly Alternative</a>
-                <a href="{% url "alt-google-reader" %}">Google Reader Alternative</a>
-                <a href="{% url "alt-open-source" %}">Open Source RSS</a>
-                <a href="{% url "alt-inoreader" %}">Inoreader Alternative</a>
-                <a href="{% url "alt-self-hosted" %}">Self-Hosted RSS</a>
-            </div>
-        </div>
-    </div>
-
     <div class="NB-welcome-activity">
         <div class="NB-inner">
             {% render_features_module %}
@@ -1756,7 +1751,7 @@
     <footer class="NB-welcome-footer">
         <div class="NB-welcome-footer-content NB-inner">
             <div class="NB-footer-icons">
-                <a href="https://github.com/samuelclay" title="GitHub"><img src="{{ MEDIA_URL }}img/welcome/github_favicon.png" style="width: 40px;height: auto;bottom: 0px;"></a>
+                <a href="https://github.com/samuelclay" title="GitHub"><img src="{{ MEDIA_URL }}img/reader/github-mark.svg" style="width: 40px;height: auto;bottom: 0px;"></a>
                 <a href="https://x.com/newsblur" title="X/Twitter"><img src="{{ MEDIA_URL }}img/welcome/x_favicon.png"></a>
                 <a href="https://mastodon.social/@newsblur" title="Mastodon"><img src="{{ MEDIA_URL }}img/welcome/mastodon_logo.svg"></a>
             </div>

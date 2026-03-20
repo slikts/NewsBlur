@@ -28,6 +28,7 @@ NEWSBLUR.Views.StoryDetailView = Backbone.View.extend({
         "click .NB-feed-story-tag": "save_classifier",
         "click .NB-feed-story-author": "save_classifier",
         "click .NB-feed-story-url": "save_url_classifier",
+        "click .NB-feed-story-ai-classifier": "open_trainer_from_ai_pill",
         "click .NB-feed-story-train": "open_story_trainer",
         "click .NB-feed-story-email": "open_email",
         "click .NB-sideoption-sharing": "click_sharing_service",
@@ -43,7 +44,11 @@ NEWSBLUR.Views.StoryDetailView = Backbone.View.extend({
         "click .NB-search-site-selection": "search_selected_text_site",
         "click .NB-search-folder-selection": "search_selected_text_folder",
         "click .NB-feed-story-discover": "toggle_feed_story_discover_dialog",
-        "click .NB-feed-story-ask-ai": "show_ask_ai_menu"
+        "click .NB-feed-story-ask-ai": "show_ask_ai_menu",
+        "click .NB-cluster-locked-upsell": "open_clustering_upgrade",
+        "click .NB-clustering-detail-upgrade-pill": "open_clustering_upgrade",
+        "mouseenter .NB-clustering-detail-info-icon": "show_clustering_tooltip",
+        "mouseleave .NB-clustering-detail-info-icon": "hide_clustering_tooltip"
     },
 
     initialize: function () {
@@ -243,6 +248,7 @@ NEWSBLUR.Views.StoryDetailView = Backbone.View.extend({
             authors_score: this.classifiers &&
                 this.classifiers.authors[this.model.get('story_authors')],
             tags_score: this.classifiers && this.classifiers.tags,
+            prompt_classifiers: this.model.get('prompt_classifiers') || [],
             url_match: this.get_url_match(),
             options: this.options,
             truncatable: this.is_truncatable(),
@@ -374,6 +380,16 @@ NEWSBLUR.Views.StoryDetailView = Backbone.View.extend({
                             <span class="NB-feed-story-url NB-score-<%= url_match.score %>">\
                                 <span class="NB-feed-story-url-label">URL: </span><span class="NB-feed-story-url-before"><%= url_match.before %></span><span class="NB-feed-story-url-matched"><%= url_match.matched %></span><span class="NB-feed-story-url-after"><%= url_match.after %></span>\
                             </span>\
+                        </div>\
+                    <% } %>\
+                    <% if (prompt_classifiers && prompt_classifiers.length) { %>\
+                        <div class="NB-feed-story-ai-classifiers">\
+                            <span class="NB-middot">&middot;</span>\
+                            <% _.each(prompt_classifiers, function(pc) { %>\
+                                <div class="NB-feed-story-ai-classifier NB-score-<%= pc.score %>" data-prompt-type="<%= pc.include_images ? \'image\' : \'content\' %>">\
+                                    <span class="NB-feed-story-ai-classifier-label"><%= pc.include_images ? \'AI Image\' : \'AI Content\' %></span>: <%= pc.prompt %>\
+                                </div>\
+                            <% }) %>\
                         </div>\
                     <% } %>\
                 </div>\
@@ -527,7 +543,6 @@ NEWSBLUR.Views.StoryDetailView = Backbone.View.extend({
     },
 
     render_cluster_stories: function () {
-        if (!NEWSBLUR.Globals.is_staff) return;
         if (!this.model.has_cluster()) return;
 
         var cluster_stories = this.model.get('cluster_stories');
@@ -578,19 +593,40 @@ NEWSBLUR.Views.StoryDetailView = Backbone.View.extend({
         this._cluster_title_views = [];
 
         var $container = $('<div class="NB-story-cluster-detail"></div>');
-        $container.append(
-            '<div class="NB-story-cluster-detail-header">' +
-            '<span class="NB-staff-only-badge">STAFF ONLY</span>' +
-            '<span class="NB-story-cluster-detail-title">Also reported by ' + stories.length + ' source' + (stories.length !== 1 ? 's' : '') + '</span>' +
-            '</div>'
-        );
+        var is_archive = NEWSBLUR.Globals.is_archive;
+        var visible_stories = is_archive ? stories : stories.slice(0, 1);
+        var hidden_count = stories.length - visible_stories.length;
+
+        var header_children = [
+            $.make('span', { className: 'NB-story-cluster-detail-title' },
+                'Also published by ' + stories.length + ' site' + (stories.length !== 1 ? 's' : ''))
+        ];
+        if (!is_archive) {
+            header_children.push($.make('span', { className: 'NB-clustering-detail-info' }, [
+                $.make('span', { className: 'NB-clustering-detail-info-icon', title: '' }, '\u24D8'),
+                $.make('span', { className: 'NB-clustering-detail-info-tooltip' }, [
+                    'These clusters were found because other subscribers share these feeds.',
+                    $.make('br'),
+                    $.make('br'),
+                    'Upgrade to Premium Archive to scan all your feeds for duplicates so you never miss a cluster.'
+                ])
+            ]));
+            if (hidden_count === 0) {
+                header_children.push($.make('a', {
+                    href: '#',
+                    className: 'NB-clustering-detail-upgrade-pill NB-archive-badge'
+                }, 'Premium Archive'));
+            }
+        }
+        var $header = $.make('div', { className: 'NB-story-cluster-detail-header' }, header_children);
+        $container.append($header);
 
         var self = this;
         var parent_read = this.model.get('read_status');
         var mark_children_read = NEWSBLUR.assets.preference('cluster_mark_read');
         var collection = NEWSBLUR.assets.stories;
 
-        _.each(stories, function (story_data) {
+        _.each(visible_stories, function (story_data) {
             // Apply read status from parent if preference is set
             if (parent_read && mark_children_read && !story_data.read_status) {
                 story_data.read_status = 1;
@@ -617,7 +653,39 @@ NEWSBLUR.Views.StoryDetailView = Backbone.View.extend({
             $container.append(story_view.$el);
         });
 
+        if (!is_archive && hidden_count > 0) {
+            var $upsell = $.make('div', { className: 'NB-cluster-locked-upsell' }, [
+                $.make('span', { className: 'NB-cluster-locked-text' },
+                    '+ ' + hidden_count + ' more site' + (hidden_count !== 1 ? 's' : '')),
+                $.make('a', {
+                    href: '#',
+                    className: 'NB-clustering-detail-upgrade-pill NB-archive-badge'
+                }, 'Premium Archive')
+            ]);
+            $container.append($upsell);
+        }
+
         return $container;
+    },
+
+    open_clustering_upgrade: function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        NEWSBLUR.reader.open_premium_upgrade_modal();
+    },
+
+    show_clustering_tooltip: function (e) {
+        var $icon = $(e.currentTarget);
+        var $tooltip = $icon.siblings('.NB-clustering-detail-info-tooltip');
+        var rect = $icon[0].getBoundingClientRect();
+        $tooltip.css({
+            top: rect.top - $tooltip.outerHeight() - 8,
+            right: window.innerWidth - rect.right - 4
+        }).show();
+    },
+
+    hide_clustering_tooltip: function (e) {
+        this.$('.NB-clustering-detail-info-tooltip').hide();
     },
 
     render_story_content: function () {
@@ -886,7 +954,12 @@ NEWSBLUR.Views.StoryDetailView = Backbone.View.extend({
     // ===========
 
     mark_read: function () {
-        this.model.mark_read({ force: true });
+        var delay = NEWSBLUR.assets.preference('read_story_delay');
+        if (delay == -2) {
+            this.model.mark_read({ skip_delay: true });
+        } else {
+            this.model.mark_read();
+        }
     },
 
     preserve_classifier_color: function (classifier_type, value, score) {
@@ -1743,6 +1816,10 @@ NEWSBLUR.Views.StoryDetailView = Backbone.View.extend({
     save_url_classifier: function () {
         // Open the Intelligence Trainer instead of toggling inline
         // URL classifiers are complex and benefit from the full trainer interface
+        this.open_story_trainer();
+    },
+
+    open_trainer_from_ai_pill: function () {
         this.open_story_trainer();
     },
 

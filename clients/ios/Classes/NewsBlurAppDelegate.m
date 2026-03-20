@@ -65,6 +65,34 @@
 #import <CoreServices/CoreServices.h>
 #import <BackgroundTasks/BackgroundTasks.h>
 
+static UISplitViewControllerSplitBehavior NBSplitBehaviorFromDecision(StorySplitPreferredBehavior behavior) {
+    switch (behavior) {
+        case StorySplitPreferredBehaviorTile:
+            return UISplitViewControllerSplitBehaviorTile;
+        case StorySplitPreferredBehaviorOverlay:
+            return UISplitViewControllerSplitBehaviorOverlay;
+        default:
+            return UISplitViewControllerSplitBehaviorDisplace;
+    }
+}
+
+static UISplitViewControllerDisplayMode NBSplitDisplayModeFromDecision(StorySplitPreferredDisplayMode displayMode) {
+    switch (displayMode) {
+        case StorySplitPreferredDisplayModeOneBesideSecondary:
+            return UISplitViewControllerDisplayModeOneBesideSecondary;
+        case StorySplitPreferredDisplayModeOneOverSecondary:
+            return UISplitViewControllerDisplayModeOneOverSecondary;
+        case StorySplitPreferredDisplayModeTwoBesideSecondary:
+            return UISplitViewControllerDisplayModeTwoBesideSecondary;
+        case StorySplitPreferredDisplayModeTwoOverSecondary:
+            return UISplitViewControllerDisplayModeTwoOverSecondary;
+        case StorySplitPreferredDisplayModeTwoDisplaceSecondary:
+            return UISplitViewControllerDisplayModeTwoDisplaceSecondary;
+        default:
+            return UISplitViewControllerDisplayModeSecondaryOnly;
+    }
+}
+
 @interface NewsBlurAppDelegate () <UIViewControllerTransitioningDelegate, UNUserNotificationCenterDelegate>
 
 @property (nonatomic, strong) NSString *cachedURL;
@@ -599,7 +627,29 @@
         } else if ([action isEqualToString:@"VIEW_STORY_IDENTIFIER"] ||
                    [action isEqualToString:@"com.apple.UNNotificationDefaultActionIdentifier"]) {
             [self popToRootWithCompletion:^{
-                [self loadFeed:feedIdStr withStory:storyHash animated:NO];
+                // Check if user has any feeds with notifications enabled
+                NSMutableArray *notificationFeeds = [NSMutableArray array];
+                for (NSString *fid in self.dictActiveFeeds) {
+                    NSDictionary *feed = [self.dictActiveFeeds objectForKey:fid];
+                    if (![feed isKindOfClass:[NSDictionary class]]) continue;
+                    NSArray *types = [feed objectForKey:@"notification_types"];
+                    if (types && [types count] > 0) {
+                        [notificationFeeds addObject:fid];
+                    }
+                }
+
+                if (notificationFeeds.count > 0) {
+                    // Open notification river with story finding mode
+                    self.inFindingStoryMode = YES;
+                    self.findingStoryStartDate = [NSDate date];
+                    self.findingStoryDictionary = nil;
+                    self.tryFeedStoryId = storyHash;
+                    self.tryFeedFeedId = feedIdStr;
+                    [self loadRiverFeedDetailView:self.feedDetailViewController withFolder:@"notifications"];
+                } else {
+                    // Fallback: no notification feeds, open individual feed
+                    [self loadFeed:feedIdStr withStory:storyHash animated:NO];
+                }
                 if (completionHandler) completionHandler();
             }];
         } else if ([action isEqualToString:@"DISMISS_IDENTIFIER"]) {
@@ -918,44 +968,30 @@
 
 - (void)updateSplitBehavior:(BOOL)refresh {
     NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    NSString *behavior = [preferences stringForKey:@"split_behavior"];
+    NSString *behavior = [preferences stringForKey:@"split_behavior"] ?: @"auto";
     
     if (self.detailViewController.storyTitlesOnLeft) {
-        if ([behavior isEqualToString:@"tile"]) {
-            self.splitViewController.preferredSplitBehavior = UISplitViewControllerSplitBehaviorTile;
-            self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeOneBesideSecondary;
-        } else if ([behavior isEqualToString:@"displace"]) {
-            self.splitViewController.preferredSplitBehavior = UISplitViewControllerSplitBehaviorDisplace;
-            self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeOneBesideSecondary;
-        } else if ([behavior isEqualToString:@"overlay"]) {
-            self.splitViewController.preferredSplitBehavior = UISplitViewControllerSplitBehaviorOverlay;
-            self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeOneOverSecondary;
-        } else {
-            // Auto: 3 columns (tile) in landscape, 2 columns (displace) in portrait
-            CGSize screenSize = self.splitViewController.view.bounds.size;
-            if (screenSize.width <= 0) {
-                screenSize = UIScreen.mainScreen.bounds.size;
-            }
-            BOOL isLandscape = screenSize.width > screenSize.height;
-            // On Mac, use a minimum width threshold instead of just aspect ratio.
-            // Below 1100pt the sidebar should auto-hide to overlay mode.
-            BOOL isTooNarrow = screenSize.width < 1100;
-            
-            if (detailViewController.isMac && isTooNarrow) {
-                self.splitViewController.preferredSplitBehavior = UISplitViewControllerSplitBehaviorOverlay;
-                self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeSecondaryOnly;
-            } else if (isLandscape) {
-                self.splitViewController.preferredSplitBehavior = UISplitViewControllerSplitBehaviorTile;
-                self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeTwoBesideSecondary;
-                if (!self.splitViewController.isCollapsed) {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        [self.splitViewController showColumn:UISplitViewControllerColumnPrimary];
-                    });
-                }
-            } else {
-                self.splitViewController.preferredSplitBehavior = UISplitViewControllerSplitBehaviorDisplace;
-                self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeOneBesideSecondary;
-            }
+        CGSize screenSize = self.splitViewController.view.bounds.size;
+        if (screenSize.width <= 0) {
+            screenSize = UIScreen.mainScreen.bounds.size;
+        }
+
+        StorySplitPreferredBehavior preferredBehavior = [StorySplitBehaviorDecision preferredBehaviorFor:behavior
+                                                                                                   width:screenSize.width
+                                                                                                  height:screenSize.height
+                                                                                                   isMac:detailViewController.isMac];
+        StorySplitPreferredDisplayMode preferredDisplayMode = [StorySplitBehaviorDecision preferredDisplayModeFor:behavior
+                                                                                                             width:screenSize.width
+                                                                                                            height:screenSize.height
+                                                                                                             isMac:detailViewController.isMac];
+        self.splitViewController.preferredSplitBehavior = NBSplitBehaviorFromDecision(preferredBehavior);
+        self.splitViewController.preferredDisplayMode = NBSplitDisplayModeFromDecision(preferredDisplayMode);
+
+        if (preferredDisplayMode == StorySplitPreferredDisplayModeTwoBesideSecondary &&
+            !self.splitViewController.isCollapsed) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.splitViewController showColumn:UISplitViewControllerColumnPrimary];
+            });
         }
     } else {
         if ([behavior isEqualToString:@"overlay"]) {
@@ -970,6 +1006,11 @@
     if (refresh) {
         [self.storyPagesViewController refreshPages];
     }
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.detailViewController resetStoryTitlesRevealOverride];
+        [self.detailViewController collapseFeedListIfNeededForStory];
+    });
 }
 
 - (void)addSplitControlToMenuController:(MenuViewController *)menuViewController {
@@ -1012,6 +1053,25 @@
         [feedsNavigationController presentViewController:swiftUIPrefs animated:YES completion:^{
             [swiftUIPrefs configureDelegate:(id<PreferencesViewDelegate>)self.feedsViewController];
             [[ThemeManager themeManager] addThemeGestureRecognizerToView:swiftUIPrefs.view];
+        }];
+    }
+}
+
+- (void)showKeyboardShortcuts {
+    [self hidePopover];
+
+    if (@available(iOS 15.0, *)) {
+        KeyboardShortcutsHostingController *shortcutsVC = [[KeyboardShortcutsHostingController alloc] init];
+
+        shortcutsVC.modalPresentationStyle = UIModalPresentationPageSheet;
+        if (shortcutsVC.sheetPresentationController) {
+            shortcutsVC.sheetPresentationController.detents = @[UISheetPresentationControllerDetent.mediumDetent];
+            shortcutsVC.sheetPresentationController.prefersGrabberVisible = YES;
+            shortcutsVC.sheetPresentationController.preferredCornerRadius = 12.0;
+        }
+
+        [feedsNavigationController presentViewController:shortcutsVC animated:YES completion:^{
+            [[ThemeManager themeManager] addThemeGestureRecognizerToView:shortcutsVC.view];
         }];
     }
 }
@@ -2025,6 +2085,7 @@
         [self.feedDetailViewController loadingFeed];
         
         [self showColumn:UISplitViewControllerColumnSecondary debugInfo:@"loadFeedDetailView" animated:YES];
+        [self.detailViewController dismissFullscreenSidebarOverlayAfterFeedSelection];
     }
     
     [self flushQueuedReadStories:NO withCallback:^{
@@ -2514,12 +2575,24 @@
             feedDetailView.storiesCollection.isWidgetView = YES;
             feedDetailView.storiesCollection.isRiverView = YES;
             [feedDetailView.storiesCollection setActiveFolder:@"widget_stories"];
-            
+
             NSUserDefaults *groupDefaults = [[NSUserDefaults alloc] initWithSuiteName:@"group.com.newsblur.NewsBlur-Group"];
             NSArray *feedInfo = [groupDefaults objectForKey:@"widget:feeds_array"];
-            
+
             for (NSDictionary *info in feedInfo) {
                 [feeds addObject:info[@"id"]];
+            }
+        } else if ([folder isEqualToString:@"notifications"] || [folderName isEqualToString:@"notifications"]) {
+            feedDetailView.storiesCollection.isRiverView = YES;
+            [feedDetailView.storiesCollection setActiveFolder:@"notifications"];
+
+            for (NSString *feedId in self.dictActiveFeeds) {
+                NSDictionary *feed = [self.dictActiveFeeds objectForKey:feedId];
+                if (![feed isKindOfClass:[NSDictionary class]]) continue;
+                NSArray *types = [feed objectForKey:@"notification_types"];
+                if (types && [types count] > 0) {
+                    [feeds addObject:[feed objectForKey:@"id"]];
+                }
             }
         } else {
             [feedDetailView.storiesCollection setActiveFolder:folderName];
@@ -2565,6 +2638,7 @@
     }
     
     [self showColumn:UISplitViewControllerColumnSecondary debugInfo:@"loadRiverFeedDetailView" animated:YES];
+    [self.detailViewController dismissFullscreenSidebarOverlayAfterFeedSelection];
     
     [self flushQueuedReadStories:NO withCallback:^{
         [self flushQueuedSavedStories:NO withCallback:^{
@@ -2663,6 +2737,10 @@
 }
 
 - (void)loadStoryDetailView {
+    [self loadStoryDetailViewAnimated:YES];
+}
+
+- (void)loadStoryDetailViewAnimated:(BOOL)animated {
     //    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone || self.isCompactWidth) {
     //        [self showDetailViewController:detailViewController sender:self];
     //        feedsNavigationController.navigationItem.hidesBackButton = YES;
@@ -2677,27 +2755,30 @@
     }
     
     NSInteger activeStoryLocation = [storiesCollection locationOfActiveStory];
-    if (activeStoryLocation >= 0) {
+    [self loadStoryDetailViewAtLocation:activeStoryLocation animated:animated];
+}
+
+- (void)loadStoryDetailViewAtLocation:(NSInteger)location animated:(BOOL)animated {
+    if (location >= 0) {
         if (self.storyPagesViewController == nil) {
             [self.detailViewController checkLayout];
         }
-        
-        BOOL animated = !self.tryFeedCategory;
+
+        animated = animated && !self.tryFeedCategory;
         [self.storyPagesViewController view];
         [self.storyPagesViewController.view setNeedsLayout];
         [self.storyPagesViewController.view layoutIfNeeded];
-        
+
         self.feedDetailViewController.cameFromFeedsList = NO;
-        
-        NSDictionary *params = @{@"location" : @(activeStoryLocation), @"animated" : @(animated)};
-        
+        NSDictionary *params = @{@"location" : @(location), @"animated" : @(animated)};
+
         if (self.isCompactWidth) {
             [self performSelector:@selector(deferredChangePage:) withObject:params afterDelay:0.0];
         } else {
             [self deferredChangePage:params];
         }
     }
-    
+
     [MBProgressHUD hideHUDForView:self.storyPagesViewController.view animated:YES];
 }
 

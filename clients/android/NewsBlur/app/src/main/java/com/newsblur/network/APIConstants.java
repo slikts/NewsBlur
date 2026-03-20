@@ -145,7 +145,9 @@ public class APIConstants {
     public static final String PARAMETER_NEW_FOLDER_NAME = "new_folder_name";
     public static final String PARAMETER_ORDER_ID = "order_id";
     public static final String PARAMETER_PRODUCT_ID = "product_id";
+    public static final String PARAMETER_PURCHASE_TOKEN = "purchase_token";
     public static final String PARAMETER_SHOW_CHANGES = "show_changes";
+    public static final String PARAMETER_READ_TIMES = "read_times";
 
     public static final String VALUE_PREFIX_SOCIAL = "social:";
     public static final String VALUE_ALLSOCIAL = "river:blurblogs"; // the magic value passed to the mark-read API for all social feeds

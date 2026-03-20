@@ -170,13 +170,13 @@ class Feed(models.Model):
 
     @property
     def favicon_url(self):
-        if settings.BACKED_BY_AWS["icons_on_s3"] and self.s3_icon:
+        if settings.BACKED_BY_AWS["icons_on_s3"] and self.s3_icon and not self.is_youtube_feed:
             return "https://s3.amazonaws.com/%s/%s.png" % (settings.S3_ICONS_BUCKET_NAME, self.pk)
         return reverse("feed-favicon", kwargs={"feed_id": self.pk})
 
     @property
     def favicon_url_fqdn(self):
-        if settings.BACKED_BY_AWS["icons_on_s3"] and self.s3_icon:
+        if settings.BACKED_BY_AWS["icons_on_s3"] and self.s3_icon and not self.is_youtube_feed:
             return self.favicon_url
         return "https://%s%s" % (Site.objects.get_current().domain, self.favicon_url)
 
@@ -237,6 +237,14 @@ class Feed(models.Model):
     @property
     def is_webfeed(self):
         return self.feed_address.startswith("webfeed:")
+
+    @property
+    def is_youtube_feed(self):
+        return "youtube.com" in self.feed_address
+
+    @property
+    def is_google_news_feed(self):
+        return "news.google.com" in self.feed_address
 
     @property
     def is_daily_briefing(self):
@@ -303,6 +311,9 @@ class Feed(models.Model):
         return feed
 
     def save(self, *args, **kwargs):
+        if kwargs.get("force_update") and not self.pk:
+            logging.debug(" ---> ~FRFeed.save(force_update=True) with no pk, skipping")
+            return
         if not self.last_update:
             self.last_update = datetime.datetime.utcnow()
         if not self.next_scheduled_update:
@@ -419,10 +430,10 @@ class Feed(models.Model):
             logging.debug(f" ---> ~FBNo premium archive subscribers, skipping discover index for {self}")
             return
 
-        stories = MStory.objects(story_feed_id=self.pk)
+        stories = MStory.objects(story_feed_id=self.pk).order_by("-story_date")[:1000]
         for index, story in enumerate(stories):
             if index % 100 == 0:
-                logging.debug(f" ---> ~FBIndexing discover story {index} of {len(stories)} in {self}")
+                logging.debug(f" ---> ~FBIndexing discover story {index} in {self}")
             story.index_story_for_discover()
 
         self.discover_indexed = True
@@ -599,6 +610,11 @@ class Feed(models.Model):
             without_rss = True
         if url and "reddit.com/r/" in url and url.endswith(".rss"):
             without_rss = True
+        if url and "/wp-json/wp/v2/posts" in url:
+            if "_embed" not in url:
+                separator = "&" if "?" in url else "?"
+                url = f"{url}{separator}_embed=true"
+            without_rss = True
 
         def criteria(key, value):
             if aggressive:
@@ -711,9 +727,15 @@ class Feed(models.Model):
         if not feed and fetch and create:
             try:
                 r = requests.get(url, timeout=10)
-            except (requests.ConnectionError, requests.models.InvalidURL):
+            except (
+                requests.ConnectionError,
+                requests.models.InvalidURL,
+                requests.ReadTimeout,
+                requests.exceptions.MissingSchema,
+                requests.exceptions.InvalidSchema,
+            ):
                 r = None
-            if r and "application/json" in r.headers.get("Content-Type"):
+            if r and "application/json" in (r.headers.get("Content-Type") or ""):
                 try:
                     feed = cls.objects.create(feed_address=url)
                     if not feed.pk:
@@ -1397,29 +1419,36 @@ class Feed(models.Model):
         if not current_counts:
             current_counts = []
 
-        # Count stories, aggregate by year and month. Map Reduce!
-        map_f = """
-            function() {
-                var date = (this.story_date.getFullYear()) + "-" + (this.story_date.getMonth()+1);
-                var hour = this.story_date.getUTCHours();
-                var day = this.story_date.getDay();
-                emit(this.story_hash, {'month': date, 'hour': hour, 'day': day});
-            }
-        """
-        reduce_f = """
-            function(key, values) {
-                return values;
-            }
-        """
+        # Count stories grouped by year/month/hour/day using aggregation pipeline
+        # (replaces MapReduce to avoid MongoDB's server-side JS lock contention)
         dates = defaultdict(int)
         hours = defaultdict(int)
         days = defaultdict(int)
-        results = MStory.objects(story_feed_id=self.pk).map_reduce(map_f, reduce_f, output="inline")
-        for result in results:
-            dates[result.value["month"]] += 1
-            hours[int(result.value["hour"])] += 1
-            days[int(result.value["day"])] += 1
-            year = int(re.findall(r"(\d{4})-\d{1,2}", result.value["month"])[0])
+        pipeline = [
+            {"$match": {"story_feed_id": self.pk}},
+            {
+                "$group": {
+                    "_id": {
+                        "year": {"$year": "$story_date"},
+                        "month": {"$month": "$story_date"},
+                        "hour": {"$hour": "$story_date"},
+                        "day": {"$dayOfWeek": "$story_date"},
+                    },
+                    "count": {"$sum": 1},
+                }
+            },
+        ]
+        for result in MStory._get_collection().aggregate(pipeline):
+            year = result["_id"]["year"]
+            month = result["_id"]["month"]
+            hour = result["_id"]["hour"]
+            # $dayOfWeek: 1=Sun..7=Sat -> JS getDay(): 0=Sun..6=Sat
+            day = result["_id"]["day"] - 1
+            count = result["count"]
+            key = "%s-%s" % (year, month)
+            dates[key] += count
+            hours[hour] += count
+            days[day] += count
             if year < min_year and year > 2000:
                 min_year = year
 
@@ -1470,33 +1499,22 @@ class Feed(models.Model):
         )
 
         def calculate_scores(cls, facet):
-            map_f = """
-                function() {
-                    emit(this["%s"], {
-                        pos: this.score>0 ? this.score : 0, 
-                        neg: this.score<0 ? Math.abs(this.score) : 0
-                    });
-                }
-            """ % (
-                facet
-            )
-            reduce_f = """
-                function(key, values) {
-                    var result = {pos: 0, neg: 0};
-                    values.forEach(function(value) {
-                        result.pos += value.pos;
-                        result.neg += value.neg;
-                    });
-                    return result;
-                }
-            """
+            pipeline = [
+                {"$match": {"feed_id": self.pk}},
+                {
+                    "$group": {
+                        "_id": "$" + facet,
+                        "pos": {"$sum": {"$cond": [{"$gt": ["$score", 0]}, "$score", 0]}},
+                        "neg": {"$sum": {"$cond": [{"$lt": ["$score", 0]}, {"$abs": "$score"}, 0]}},
+                    }
+                },
+            ]
             scores = []
-            res = cls.objects(feed_id=self.pk).map_reduce(map_f, reduce_f, output="inline")
-            for r in res:
-                facet_values = dict([(k, int(v)) for k, v in r.value.items()])
-                facet_values[facet] = r.key
-                if facet_values["pos"] + facet_values["neg"] >= 1:
-                    scores.append(facet_values)
+            for r in cls._get_collection().aggregate(pipeline):
+                pos = int(r["pos"])
+                neg = int(r["neg"])
+                if pos + neg >= 1:
+                    scores.append({"pos": pos, "neg": neg, facet: r["_id"]})
             scores = sorted(scores, key=lambda v: v["neg"] - v["pos"])
 
             return scores
@@ -1776,6 +1794,10 @@ class Feed(models.Model):
                             "   ---> [%-30s] ~SN~FRIntegrityError on new story: %s - %s"
                             % (self.feed_title[:30], story.get("guid"), e)
                         )
+                if self.is_google_news_feed and s:
+                    s.fetch_og_image()
+                    if s.image_urls:
+                        s.save()
                 if self.search_indexed and s:
                     s.index_story_for_search()
                 if s and s.story_hash:
@@ -1922,12 +1944,16 @@ class Feed(models.Model):
 
     def save_popular_tags(self, feed_tags=None, verbose=False):
         if not feed_tags:
-            all_tags = MStory.objects(story_feed_id=self.pk, story_tags__exists=True).item_frequencies(
-                "story_tags"
-            )
-            feed_tags = sorted(
-                [(k, v) for k, v in list(all_tags.items()) if int(v) > 0], key=itemgetter(1), reverse=True
-            )[:25]
+            # Use aggregation pipeline instead of item_frequencies (which uses MapReduce)
+            pipeline = [
+                {"$match": {"story_feed_id": self.pk, "story_tags": {"$exists": True}}},
+                {"$unwind": "$story_tags"},
+                {"$group": {"_id": "$story_tags", "count": {"$sum": 1}}},
+                {"$match": {"count": {"$gt": 0}}},
+                {"$sort": {"count": -1}},
+                {"$limit": 25},
+            ]
+            feed_tags = [(r["_id"], r["count"]) for r in MStory._get_collection().aggregate(pipeline)]
         popular_tags = json.encode(feed_tags)
         if verbose:
             print("Found %s tags: %s" % (len(feed_tags), popular_tags))
@@ -1950,12 +1976,14 @@ class Feed(models.Model):
 
     def save_popular_authors(self, feed_authors=None):
         if not feed_authors:
-            authors = defaultdict(int)
-            for story in MStory.objects(story_feed_id=self.pk).only("story_author_name"):
-                authors[story.story_author_name] += 1
-            feed_authors = sorted(
-                [(k, v) for k, v in list(authors.items()) if k], key=itemgetter(1), reverse=True
-            )[:20]
+            # Use aggregation pipeline instead of iterating all stories in Python
+            pipeline = [
+                {"$match": {"story_feed_id": self.pk, "story_author_name": {"$nin": [None, ""]}}},
+                {"$group": {"_id": "$story_author_name", "count": {"$sum": 1}}},
+                {"$sort": {"count": -1}},
+                {"$limit": 20},
+            ]
+            feed_authors = [(r["_id"], r["count"]) for r in MStory._get_collection().aggregate(pipeline)]
 
         popular_authors = json.encode(feed_authors)
         if len(popular_authors) < 1023:
@@ -2546,7 +2574,6 @@ class Feed(models.Model):
     @classmethod
     def format_stories(cls, stories_db, feed_id=None, include_permalinks=False):
         stories = []
-
         for story_db in stories_db:
             story = cls.format_story(story_db, feed_id, include_permalinks=include_permalinks)
             stories.append(story)
@@ -2577,7 +2604,6 @@ class Feed(models.Model):
             has_changes = True
         if not show_changes and latest_story_content:
             story_content = latest_story_content
-
         story_title = story_db.story_title
         blank_story_title = False
         if not story_title:
@@ -3668,6 +3694,8 @@ class MStory(mongo.Document):
         if story_hash:
             story_id = story_hash
         story_hash = cls.ensure_story_hash(story_id, story_feed_id)
+        if not story_hash:
+            return None, False
         if not story_feed_id:
             story_feed_id, _ = cls.split_story_hash(story_hash)
         if isinstance(story_id, ObjectId):
@@ -3733,6 +3761,10 @@ class MStory(mongo.Document):
 
     @classmethod
     def ensure_story_hash(cls, story_id, story_feed_id):
+        if not story_id:
+            return None
+        if not isinstance(story_id, str):
+            story_id = str(story_id)
         if not cls.RE_STORY_HASH.match(story_id):
             story_id = "%s:%s" % (
                 story_feed_id,
@@ -3743,6 +3775,8 @@ class MStory(mongo.Document):
 
     @classmethod
     def split_story_hash(cls, story_hash):
+        if not story_hash:
+            return None, None
         matches = cls.RE_STORY_HASH.match(story_hash)
         if matches:
             groups = matches.groups()
@@ -3973,6 +4007,152 @@ class MStory(mongo.Document):
 
         return self.image_urls
 
+    def fetch_og_image(self):
+        """Fetch og:image meta tag from story permalink. Used for Google News
+        feeds where RSS content has no images. Decodes Google News redirect
+        URLs to get the actual article URL first."""
+        import json
+        from urllib.parse import quote
+
+        from utils.feed_functions import TimeoutError, timelimit
+
+        url = self.story_permalink
+        if not url:
+            return
+
+        @timelimit(15)
+        def _fetch_og(url):
+            article_url = url
+            # Decode Google News redirect URL to actual article URL
+            if "news.google.com" in url and "/articles/" in url:
+                decoded = self._decode_google_news_url(url)
+                if decoded:
+                    article_url = decoded
+                else:
+                    return None
+
+            try:
+                resp = requests.get(
+                    article_url,
+                    headers={"User-Agent": "NewsBlur OG Image Fetcher"},
+                    timeout=8,
+                    allow_redirects=True,
+                )
+            except requests.RequestException:
+                return None
+            if resp.status_code != 200:
+                return None
+            # Only parse the first 50KB to find meta tags quickly
+            try:
+                soup = BeautifulSoup(resp.text[:50000], features="lxml")
+            except Exception:
+                return None
+            og_image = soup.find("meta", attrs={"property": "og:image"})
+            if og_image and og_image.get("content"):
+                return og_image["content"]
+            og_image = soup.find("meta", attrs={"name": "og:image"})
+            if og_image and og_image.get("content"):
+                return og_image["content"]
+            return None
+
+        try:
+            image_url = _fetch_og(url)
+        except TimeoutError:
+            return
+
+        if not image_url or len(image_url) >= 1024:
+            return
+
+        # Check for broken double-protocol URLs
+        if "http://" in image_url[1:] or "https://" in image_url[1:]:
+            return
+
+        if not self.image_urls:
+            self.image_urls = []
+        if image_url not in self.image_urls:
+            self.image_urls.insert(0, image_url)
+            logging.debug(
+                "   ---> Fetched og:image for Google News story: %s" % image_url[:80]
+            )
+
+        self.prepend_image_to_content(image_url)
+
+    def prepend_image_to_content(self, image_url):
+        """Prepend an image tag to the story content, replacing any previously prepended image."""
+        img_tag = f'<img src="{image_url}">'
+        story_content = ""
+        if self.story_content_z:
+            story_content = smart_str(zlib.decompress(self.story_content_z))
+
+        # Strip any previously prepended image tag
+        if story_content.startswith("<img"):
+            newline_idx = story_content.find("\n")
+            if newline_idx != -1:
+                story_content = story_content[newline_idx + 1:]
+
+        story_content = f'{img_tag}\n{story_content}'
+        self.story_content_z = zlib.compress(smart_bytes(story_content))
+
+    @staticmethod
+    def _decode_google_news_url(source_url):
+        """Decode a Google News redirect URL to the actual article URL.
+        Uses Google's batchexecute API with signature/timestamp from the article page."""
+        import json
+        from urllib.parse import quote, urlparse
+
+        try:
+            parsed = urlparse(source_url)
+            path_parts = parsed.path.split("/")
+            base64_str = path_parts[-1]
+        except Exception:
+            return None
+
+        # Step 1: Fetch the Google News article page to get signature and timestamp
+        try:
+            resp = requests.get(
+                f"https://news.google.com/articles/{base64_str}",
+                timeout=8,
+            )
+            if resp.status_code != 200:
+                return None
+        except requests.RequestException:
+            return None
+
+        soup = BeautifulSoup(resp.text, features="lxml")
+        data_element = soup.select_one("c-wiz > div[jscontroller]")
+        if not data_element:
+            return None
+        signature = data_element.get("data-n-a-sg")
+        timestamp = data_element.get("data-n-a-ts")
+        if not signature or not timestamp:
+            return None
+
+        # Step 2: Call batchexecute API to decode the URL
+        try:
+            req_params = (
+                '["garturlreq",[["X","X",["X","X"],null,null,1,1,"US:en"'
+                ',null,1,null,null,null,null,null,0,1],"X","X",1,[1,1,1]'
+                f',1,1,null,0,0,null,0],"{base64_str}",{timestamp}'
+                f',"{signature}"]'
+            )
+            payload = ["Fbv4je", req_params]
+            resp = requests.post(
+                "https://news.google.com/_/DotsSplashUi/data/batchexecute",
+                headers={
+                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                },
+                data=f"f.req={quote(json.dumps([[payload]]))}",
+                timeout=8,
+            )
+            if resp.status_code != 200:
+                return None
+            parsed_data = json.loads(resp.text.split("\n\n")[1])[:-2]
+            decoded_url = json.loads(parsed_data[0][2])[1]
+            return decoded_url
+        except (requests.RequestException, json.JSONDecodeError, IndexError, TypeError, KeyError):
+            return None
+
     def fetch_original_text(self, force=False, request=None, debug=False):
         original_text_z = self.original_text_z
 
@@ -3983,6 +4163,12 @@ class MStory(mongo.Document):
             original_doc = ti.fetch(return_document=True)
             original_text = original_doc.get("content") if original_doc else None
             self.extract_image_urls(force=force, text=True)
+            # Use Mercury's lead_image_url (og:image) if story still has no images
+            lead_image = original_doc.get("image") if original_doc else None
+            if lead_image and not self.image_urls:
+                has_broken_proto = "http://" in lead_image[1:] or "https://" in lead_image[1:]
+                if len(lead_image) < 1024 and not has_broken_proto:
+                    self.image_urls = [lead_image]
             self.save()
         else:
             logging.user(request, "~FYFetching ~FGoriginal~FY story text, ~SBfound.")

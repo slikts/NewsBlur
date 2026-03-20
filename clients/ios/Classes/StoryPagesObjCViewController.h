@@ -131,6 +131,7 @@
 - (void)setNextPreviousButtons;
 - (void)setTextButton;
 - (void)setTextButton:(StoryDetailViewController *)storyViewController;
+- (void)updateStoryTitleNavigationButtons;
 - (void)subscribeToBlurblog;
 
 - (IBAction)toggleFontSize:(id)sender;

@@ -4,13 +4,18 @@ import datetime
 import time
 
 import redis
+from celery.exceptions import SoftTimeLimitExceeded
 from django.conf import settings
 
 from newsblur_web.celeryapp import app
 from utils import log as logging
 
+# clustering/tasks.py: Max feeds per ZRANGEBYSCORE pipeline batch to avoid
+# blocking Redis for too long. Each batch is a separate pipeline.execute().
+CANDIDATE_FEED_BATCH_SIZE = 50
 
-@app.task(name="compute-story-clusters")
+
+@app.task(name="compute-story-clusters", soft_time_limit=120, time_limit=180)
 def ComputeStoryClusters(feed_id):
     """Compute story clusters for a feed after it updates.
 
@@ -21,20 +26,16 @@ def ComputeStoryClusters(feed_id):
     Results are stored in Redis for fast lookup during river loads.
     Gated to feeds with archive subscribers.
     """
-    from apps.clustering.models import (
-        CLUSTER_LOOKBACK_HOURS,
-        find_semantic_clusters,
-        find_title_clusters,
-        merge_clusters,
-        store_clusters_to_redis,
-    )
-    from apps.rss_feeds.models import Feed, MStory
+    from apps.rss_feeds.models import Feed
 
     # Clear dedup key so this feed can be re-enqueued after we finish
     r_update = redis.Redis(connection_pool=settings.REDIS_FEED_UPDATE_POOL)
     r_update.delete("cluster_queued:%s" % feed_id)
 
-    r = redis.Redis(connection_pool=settings.REDIS_STORY_HASH_POOL)
+    # Use replica for read-heavy operations to reduce primary Redis load
+    r_replica = redis.Redis(connection_pool=settings.REDIS_STORY_HASH_REPLICA_POOL)
+    # Writes still go to the primary
+    r_primary = redis.Redis(connection_pool=settings.REDIS_STORY_HASH_POOL)
 
     try:
         feed = Feed.objects.get(pk=feed_id)
@@ -47,19 +48,41 @@ def ComputeStoryClusters(feed_id):
 
     cluster_start = time.time()
 
+    try:
+        _compute_story_clusters_inner(
+            feed_id, feed, cluster_start, r_replica, r_primary
+        )
+    except SoftTimeLimitExceeded:
+        elapsed = time.time() - cluster_start
+        logging.debug(
+            " ---> ~FRClustering: soft time limit exceeded for feed %s after %.1fs" % (feed_id, elapsed)
+        )
+
+
+def _compute_story_clusters_inner(feed_id, feed, cluster_start, r_replica, r_primary):
+    """Inner clustering logic, separated so SoftTimeLimitExceeded is caught cleanly."""
+    from apps.clustering.models import (
+        CLUSTER_LOOKBACK_HOURS,
+        find_semantic_clusters,
+        find_title_clusters,
+        merge_clusters,
+        store_clusters_to_redis,
+    )
+    from apps.rss_feeds.models import Feed, MStory
+
     # Get recent stories from this feed
     lookback = datetime.datetime.utcnow() - datetime.timedelta(hours=CLUSTER_LOOKBACK_HOURS)
     lookback_ts = time.mktime(lookback.timetuple())
     now_ts = time.mktime(datetime.datetime.utcnow().timetuple())
 
-    story_hashes = r.zrangebyscore("zF:%s" % feed_id, lookback_ts, now_ts)
+    story_hashes = r_replica.zrangebyscore("zF:%s" % feed_id, lookback_ts, now_ts)
     if not story_hashes:
         return
 
     story_hashes = [h if isinstance(h, str) else h.decode() for h in story_hashes]
 
     # Skip stories already in a cluster
-    pipe = r.pipeline()
+    pipe = r_replica.pipeline()
     for h in story_hashes:
         pipe.get("sCL:%s" % h)
     existing = pipe.execute()
@@ -89,20 +112,43 @@ def ComputeStoryClusters(feed_id):
     if not related_feed_ids:
         return
 
-    # Fetch candidate stories from related feeds in the same time window
+    # Fetch candidate stories from related feeds in batched pipelines
+    # to avoid blocking Redis for too long with a single large pipeline
     related_feed_ids = list(related_feed_ids)[:200]
-    candidate_pipe = r.pipeline()
-    for fid in related_feed_ids:
-        candidate_pipe.zrangebyscore("zF:%s" % fid, lookback_ts, now_ts)
-    candidate_results = candidate_pipe.execute()
-
     candidate_hashes = set()
-    for fid, hashes in zip(related_feed_ids, candidate_results):
-        for h in hashes:
-            candidate_hashes.add(h if isinstance(h, str) else h.decode())
+    for batch_start in range(0, len(related_feed_ids), CANDIDATE_FEED_BATCH_SIZE):
+        batch_feeds = related_feed_ids[batch_start : batch_start + CANDIDATE_FEED_BATCH_SIZE]
+        candidate_pipe = r_replica.pipeline()
+        for fid in batch_feeds:
+            candidate_pipe.zrangebyscore("zF:%s" % fid, lookback_ts, now_ts)
+        candidate_results = candidate_pipe.execute()
+        for fid, hashes in zip(batch_feeds, candidate_results):
+            for h in hashes:
+                candidate_hashes.add(h if isinstance(h, str) else h.decode())
 
-    # Combine unclustered + candidates for clustering
-    all_hashes = set(unclustered) | candidate_hashes
+    # Check which candidates are already clustered so we can:
+    # 1. Skip them from the expensive clustering algorithms
+    # 2. Merge new stories into their existing clusters when matched
+    candidate_cluster_map = {}
+    candidate_list = list(candidate_hashes)
+    for batch_start in range(0, len(candidate_list), 500):
+        batch = candidate_list[batch_start : batch_start + 500]
+        pipe = r_replica.pipeline()
+        for h in batch:
+            pipe.get("sCL:%s" % h)
+        results = pipe.execute()
+        for h, cid in zip(batch, results):
+            if cid:
+                candidate_cluster_map[h] = cid if isinstance(cid, str) else cid.decode()
+
+    # Split candidates into unclustered (for full comparison) and
+    # already-clustered (only used for joining new stories to existing clusters)
+    unclustered_candidates = candidate_hashes - set(candidate_cluster_map.keys())
+
+    # Combine unclustered stories from this feed + unclustered candidates for clustering.
+    # Already-clustered candidates are included so that title matching can detect
+    # when a new story should join an existing cluster.
+    all_hashes = set(unclustered) | unclustered_candidates | set(candidate_cluster_map.keys())
     if len(all_hashes) < 2:
         return
 
@@ -131,8 +177,8 @@ def ComputeStoryClusters(feed_id):
     story_title_map = {s["story_hash"]: s["story_title"] for s in stories}
 
     logging.debug(
-        " ---> ~FBClustering: computing clusters for feed %s (%s stories, %s candidates)"
-        % (feed_id, len(unclustered), len(candidate_hashes))
+        " ---> ~FBClustering: computing clusters for feed %s (%s stories, %s candidates, %s already clustered)"
+        % (feed_id, len(unclustered), len(unclustered_candidates), len(candidate_cluster_map))
     )
 
     # Build original_feed_map and feed_title_map for branched feed resolution
@@ -157,15 +203,21 @@ def ComputeStoryClusters(feed_id):
     # in the ES index to find similar stories across related feeds.
     unclustered_stories = [s for s in stories if s["story_hash"] in set(unclustered)]
 
+    # clustering/tasks.py: Budget 60s for ES queries (soft limit is 120s),
+    # and cap at 10 ES queries per task to bound load on the single ES node.
+    es_deadline = cluster_start + 60
     semantic_clusters = {}
+    es_stats = {}
     if unclustered_stories:
-        semantic_clusters = find_semantic_clusters(
+        semantic_clusters, es_stats = find_semantic_clusters(
             unclustered_stories,
             all_feed_ids,
             lookback_date=lookback,
             original_feed_map=original_feed_map,
             story_title_map=story_title_map,
             feed_title_map=feed_title_map,
+            max_es_queries=10,
+            deadline=es_deadline,
         )
 
     # Merge title and semantic clusters
@@ -179,14 +231,44 @@ def ComputeStoryClusters(feed_id):
             story_title_map=story_title_map,
             feed_title_map=feed_title_map,
         )
-        store_clusters_to_redis(combined)
+        store_clusters_to_redis(
+            combined,
+            candidate_cluster_map=candidate_cluster_map,
+            story_title_map=story_title_map,
+        )
         logging.debug(
             " ---> ~FBClustering: found %s title + %s semantic = %s combined clusters for feed %s"
             % (len(title_clusters), len(semantic_clusters), len(combined), feed_id)
         )
 
-    # clustering/tasks.py: Record timing for Grafana
+    # clustering/tasks.py: Log ES query stats for debugging
+    if es_stats and es_stats.get("query_count", 0) > 0:
+        logging.debug(
+            " ---> ~FBClustering: ES stats for feed %s: %s queries in %sms (avg %sms, max %sms), "
+            "%s hits found, %s matched, %s skipped (title=%s, feeds=%s, deadline=%s, cap=%s)"
+            % (
+                feed_id,
+                es_stats.get("query_count", 0),
+                int(es_stats.get("total_ms", 0)),
+                int(es_stats.get("avg_ms", 0)),
+                int(es_stats.get("max_ms", 0)),
+                es_stats.get("hits_found", 0),
+                es_stats.get("hits_matched", 0),
+                es_stats.get("skipped_short_title", 0)
+                + es_stats.get("skipped_no_feeds", 0)
+                + es_stats.get("skipped_deadline", 0)
+                + es_stats.get("skipped_max_queries", 0),
+                es_stats.get("skipped_short_title", 0),
+                es_stats.get("skipped_no_feeds", 0),
+                es_stats.get("skipped_deadline", 0),
+                es_stats.get("skipped_max_queries", 0),
+            )
+        )
+
+    # clustering/tasks.py: Record timing and ES stats for Grafana
     from apps.statistics.rclustering_usage import RClusteringUsage
 
     cluster_duration_ms = (time.time() - cluster_start) * 1000
     RClusteringUsage.record_timing(cluster_duration_ms)
+    if es_stats:
+        RClusteringUsage.record_es_stats(es_stats)

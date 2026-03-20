@@ -640,3 +640,313 @@ class Test_RiverStories(TransactionTestCase):
         self.assertIsNotNone(pool_story, "Redis story pool should be configured")
 
         print(f">>> ✓ Both feed_stories() and truncate_river() use same Redis pool")
+
+    def test_lazy_merge__returns_stories_sorted_newest_first(self):
+        """
+        Test that lazy merge (k-way heap) returns stories in correct newest-first order.
+        All river loads now use lazy merge instead of ZUNIONSTORE.
+        """
+        self.client.login(username="conesus", password="test")
+
+        print(f"\n>>> Testing lazy merge returns stories sorted newest-first")
+
+        connection.queriesx = []
+
+        response = self.client.post(
+            reverse("load-river-stories"),
+            {"feeds": self.test_feeds, "read_filter": "all", "page": 1, "order": "newest"},
+        )
+
+        content = json.decode(response.content)
+        self.assertEqual(response.status_code, 200)
+
+        stories = content.get("stories", [])
+        if len(stories) > 1:
+            # Verify stories are sorted newest-first by story_date
+            dates = [s.get("story_date") for s in stories]
+            for i in range(len(dates) - 1):
+                self.assertGreaterEqual(
+                    dates[i],
+                    dates[i + 1],
+                    f"Stories not sorted newest-first: {dates[i]} < {dates[i+1]}",
+                )
+
+        counts = self.count_queries()
+        print(f">>> Lazy merge newest-first: {len(stories)} stories, queries: {counts}")
+        print(f">>> ✓ Stories correctly sorted newest-first")
+
+    def test_lazy_merge__returns_stories_sorted_oldest_first(self):
+        """
+        Test that lazy merge works with oldest-first ordering.
+        """
+        self.client.login(username="conesus", password="test")
+
+        print(f"\n>>> Testing lazy merge with oldest-first order")
+
+        connection.queriesx = []
+
+        response = self.client.post(
+            reverse("load-river-stories"),
+            {"feeds": self.test_feeds, "read_filter": "all", "page": 1, "order": "oldest"},
+        )
+
+        content = json.decode(response.content)
+        self.assertEqual(response.status_code, 200)
+
+        stories = content.get("stories", [])
+        if len(stories) > 1:
+            dates = [s.get("story_date") for s in stories]
+            for i in range(len(dates) - 1):
+                self.assertLessEqual(
+                    dates[i],
+                    dates[i + 1],
+                    f"Stories not sorted oldest-first: {dates[i]} > {dates[i+1]}",
+                )
+
+        counts = self.count_queries()
+        print(f">>> Lazy merge oldest-first: {len(stories)} stories, queries: {counts}")
+        print(f">>> ✓ Stories correctly sorted oldest-first")
+
+    def test_lazy_merge__unread_filter(self):
+        """
+        Test that lazy merge works with read_filter='unread'.
+        """
+        self.client.login(username="conesus", password="test")
+
+        print(f"\n>>> Testing lazy merge with unread filter")
+
+        connection.queriesx = []
+
+        response = self.client.post(
+            reverse("load-river-stories"),
+            {"feeds": self.test_feeds, "read_filter": "unread", "page": 1},
+        )
+
+        content = json.decode(response.content)
+        self.assertEqual(response.status_code, 200)
+
+        counts = self.count_queries()
+        stories = content.get("stories", [])
+        print(f">>> Lazy merge unread filter: {len(stories)} stories, queries: {counts}")
+        self.assertLess(counts["total"], 50, "Queries should be reasonable with unread filter")
+        print(f">>> ✓ Unread filter works with lazy merge")
+
+    def test_lazy_merge__pagination_extends_cache(self):
+        """
+        Test that lazy merge pagination works: page 2 extends the cache from page 1
+        rather than replacing it, so subsequent pages load correctly.
+        """
+        self.client.login(username="conesus", password="test")
+
+        print(f"\n>>> Testing lazy merge pagination (page 1 then page 2)")
+
+        # Page 1
+        connection.queriesx = []
+        response1 = self.client.post(
+            reverse("load-river-stories"),
+            {"feeds": self.test_feeds, "read_filter": "all", "page": 1},
+        )
+        content1 = json.decode(response1.content)
+        self.assertEqual(response1.status_code, 200)
+        stories_page1 = content1.get("stories", [])
+        page1_hashes = {s.get("story_hash") for s in stories_page1}
+        counts1 = self.count_queries()
+        print(f">>> Page 1: {len(stories_page1)} stories, queries: {counts1}")
+
+        # Page 2
+        connection.queriesx = []
+        response2 = self.client.post(
+            reverse("load-river-stories"),
+            {"feeds": self.test_feeds, "read_filter": "all", "page": 2},
+        )
+        content2 = json.decode(response2.content)
+        self.assertEqual(response2.status_code, 200)
+        stories_page2 = content2.get("stories", [])
+        page2_hashes = {s.get("story_hash") for s in stories_page2}
+        counts2 = self.count_queries()
+        print(f">>> Page 2: {len(stories_page2)} stories, queries: {counts2}")
+
+        # Pages should not overlap (no duplicate stories)
+        overlap = page1_hashes & page2_hashes
+        self.assertEqual(
+            len(overlap), 0, f"Pages should not overlap, got {len(overlap)} duplicates: {overlap}"
+        )
+
+        # If we have enough stories for 2 pages, page 2 should have stories
+        total_stories = len(self.test_story_hashes)
+        stories_per_page = 6  # default limit
+        if total_stories > stories_per_page:
+            self.assertGreater(len(stories_page2), 0, "Page 2 should have stories when enough exist")
+
+        print(f">>> ✓ Pagination works: {len(stories_page1)} + {len(stories_page2)} stories, no overlap")
+
+    def test_lazy_merge__no_zunionstore_in_river(self):
+        """
+        Test that river loading does NOT use ZUNIONSTORE for aggregation.
+        The lazy merge path should avoid the blocking ZUNIONSTORE entirely.
+        Only small ZUNIONSTORE on cached results (for unread key copy) is acceptable.
+        """
+        self.client.login(username="conesus", password="test")
+
+        print(f"\n>>> Testing that lazy merge avoids ZUNIONSTORE for aggregation")
+
+        connection.queriesx = []
+
+        response = self.client.post(
+            reverse("load-river-stories"),
+            {"feeds": self.test_feeds, "read_filter": "all", "page": 1},
+        )
+
+        content = json.decode(response.content)
+        self.assertEqual(response.status_code, 200)
+
+        # Check Redis commands — there should be no ZUNIONSTORE on feed keys.
+        # The lazy merge path uses per-feed ZRANGEBYSCORE + Python heap merge.
+        # We verify by checking that the query count is low — ZUNIONSTORE on
+        # N feeds generates significantly more Redis operations than lazy merge.
+        counts = self.count_queries()
+        print(f">>> River load queries: {counts}")
+
+        # With lazy merge, Redis story ops should scale linearly with feed count
+        # (one ZRANGEBYSCORE per feed), not quadratically like ZUNIONSTORE
+        max_expected_redis = len(self.test_feeds) * 4 + 10  # generous allowance
+        self.assertLess(
+            counts["redis_total"],
+            max_expected_redis,
+            f"Redis ops ({counts['redis_total']}) should scale linearly, not exceed {max_expected_redis}",
+        )
+
+        print(f">>> ✓ Lazy merge used: {counts['redis_total']} Redis ops for {len(self.test_feeds)} feeds")
+
+    def test_lazy_merge__pagination_stable_after_mark_read(self):
+        """
+        Test that marking stories as read between page loads doesn't cause
+        stories to be skipped on subsequent pages (read_filter='unread').
+
+        Compares paginated-with-mark-read results against a ground truth
+        (single-pass fetch of all stories). The bug causes page 2 to skip
+        stories because the offset is applied to a shifted unread list.
+        """
+        import redis
+
+        from django.conf import settings
+
+        r = redis.Redis(connection_pool=settings.REDIS_STORY_HASH_POOL)
+        test_limit = 4
+
+        usersubs = UserSubscription.subs_for_feeds(self.user.pk, feed_ids=self.test_feeds, read_filter="all")
+        feed_ids = [sub.feed_id for sub in usersubs]
+        self.assertGreater(len(feed_ids), 0, "Need subscriptions")
+
+        def clean_state():
+            """Reset all caches and recalc flags for a clean query."""
+            UserSubscription.objects.filter(user=self.user, feed_id__in=feed_ids).update(
+                needs_unread_recalc=True
+            )
+            for fid in feed_ids:
+                r.delete(f"zU:{self.user.pk}:{fid}")
+            ranked_key, unread_key = UserSubscription.get_river_cache_keys(self.user.pk, feed_ids, "")
+            r.delete(ranked_key)
+            r.delete(unread_key)
+
+        # Ground truth: fetch top 2*test_limit stories in a single pass (no mark-as-read)
+        clean_state()
+        truth_hashes, _ = UserSubscription.feed_stories(
+            user_id=self.user.pk,
+            feed_ids=feed_ids,
+            offset=0,
+            limit=test_limit * 2,
+            order="newest",
+            read_filter="unread",
+            usersubs=usersubs,
+            cutoff_date=self.user.profile.unread_cutoff,
+        )
+        truth = [h.decode() if isinstance(h, bytes) else h for h in truth_hashes[: test_limit * 2]]
+        self.assertGreaterEqual(len(truth), test_limit * 2, "Need enough stories for the test")
+        truth_p1 = set(truth[:test_limit])
+        truth_p2 = set(truth[test_limit : test_limit * 2])
+
+        # Now do the paginated flow: page 1, mark as read, page 2
+        clean_state()
+
+        # Page 1
+        p1_hashes, _ = UserSubscription.feed_stories(
+            user_id=self.user.pk,
+            feed_ids=feed_ids,
+            offset=0,
+            limit=test_limit,
+            order="newest",
+            read_filter="unread",
+            usersubs=usersubs,
+            cutoff_date=self.user.profile.unread_cutoff,
+        )
+        p1 = {h.decode() if isinstance(h, bytes) else h for h in p1_hashes[:test_limit]}
+        self.assertEqual(p1, truth_p1, "Page 1 should match ground truth")
+
+        # Mark page 1 stories as read
+        for story_hash in p1:
+            fid = int(story_hash.split(":")[0])
+            r.sadd(f"RS:{self.user.pk}", story_hash)
+            r.sadd(f"RS:{self.user.pk}:{fid}", story_hash)
+
+        # Trigger unread recalc (mimics mark_story_hashes_as_read)
+        for fid in feed_ids:
+            UserSubscription.objects.filter(user=self.user, feed_id=fid).update(needs_unread_recalc=True)
+            r.delete(f"zU:{self.user.pk}:{fid}")
+
+        # Page 2: the drift bug causes this to skip stories
+        p2_hashes, _ = UserSubscription.feed_stories(
+            user_id=self.user.pk,
+            feed_ids=feed_ids,
+            offset=test_limit,
+            limit=test_limit,
+            order="newest",
+            read_filter="unread",
+            usersubs=usersubs,
+            cutoff_date=self.user.profile.unread_cutoff,
+        )
+        p2 = {h.decode() if isinstance(h, bytes) else h for h in p2_hashes[:test_limit]}
+
+        # THE KEY ASSERTION: page 2 should return the same stories as ground truth page 2.
+        # Without the fix, the offset is applied to the shifted unread list,
+        # causing stories from truth_p2 to be skipped entirely.
+        self.assertEqual(
+            p2,
+            truth_p2,
+            f"Page 2 should match ground truth.\n"
+            f"  Expected: {truth_p2}\n"
+            f"  Got:      {p2}\n"
+            f"  Missing:  {truth_p2 - p2}\n"
+            f"  Extra:    {p2 - truth_p2}\n"
+            f"  This indicates pagination drift from mark-as-read shifting the offset.",
+        )
+
+        print(f">>> Pagination stable after mark-read: " f"p1={len(p1)}, p2={len(p2)}, ground truth matched")
+
+    def test_lazy_merge__single_feed_folder(self):
+        """
+        Test that lazy merge works correctly even for a single-feed river.
+        This verifies there's no regression from removing the ZUNIONSTORE path.
+        """
+        self.client.login(username="conesus", password="test")
+
+        print(f"\n>>> Testing lazy merge with single feed")
+
+        connection.queriesx = []
+
+        response = self.client.post(
+            reverse("load-river-stories"),
+            {"feeds": [self.test_feeds[0]], "read_filter": "all", "page": 1},
+        )
+
+        content = json.decode(response.content)
+        self.assertEqual(response.status_code, 200)
+
+        stories = content.get("stories", [])
+        counts = self.count_queries()
+        print(f">>> Single feed river: {len(stories)} stories, queries: {counts}")
+
+        # Should work and return stories
+        self.assertGreater(len(stories), 0, "Single feed river should return stories")
+        self.assertLess(counts["total"], 30, "Single feed should have minimal queries")
+        print(f">>> ✓ Single feed lazy merge works")
