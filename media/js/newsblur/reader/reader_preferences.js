@@ -76,8 +76,9 @@ _.extend(NEWSBLUR.ReaderPreferences.prototype, {
                                 }),
                                 $.make('div', { className: 'NB-daysofunread-slider-value' })
                             ]),
-                            (!NEWSBLUR.Globals.is_archive && $.make('a', { className: 'NB-daysofunread-upgrade-notice NB-premium-link', href: '#' }, [
-                                $.make('span', { className: 'NB-archive-badge' }, 'Premium Archive')
+                            (!NEWSBLUR.Globals.is_archive && $.make('a', { className: 'NB-premium-archive-upgrade-notice NB-premium-link', href: '#' }, [
+                                $.make('span', { className: 'NB-archive-badge' }, 'Premium Archive'),
+                                ' Customize days of unreads'
                             ]))
                         ]),
                         $.make('div', { className: 'NB-preference-label' }, [
@@ -358,7 +359,7 @@ _.extend(NEWSBLUR.ReaderPreferences.prototype, {
                             $.make('div', { className: 'NB-preference-sublabel' }, 'Folders, feeds, and story titles')
                         ])
                     ]),
-                    (NEWSBLUR.Globals.is_staff && $.make('div', { className: 'NB-preference NB-preference-briefing-enabled' }, [
+                    ($.make('div', { className: 'NB-preference NB-preference-briefing-enabled' }, [
                         $.make('div', { className: 'NB-preference-options' }, [
                             $.make('div', { className: 'NB-social-card NB-social-card-enable' }, [
                                 $.make('input', { id: 'NB-preference-briefing-enabled-1', type: 'radio', name: 'briefing_enabled', value: 'true' }),
@@ -384,7 +385,7 @@ _.extend(NEWSBLUR.ReaderPreferences.prototype, {
                             'Daily Briefing'
                         ])
                     ])),
-                    (NEWSBLUR.Globals.is_staff && $.make('div', { className: 'NB-preference NB-preference-clustering-enabled' }, [
+                    ($.make('div', { className: 'NB-preference NB-preference-clustering-enabled' }, [
                         $.make('div', { className: 'NB-preference-options' }, [
                             $.make('div', { className: 'NB-social-card NB-social-card-enable' }, [
                                 $.make('input', { id: 'NB-preference-clustering-enabled-1', type: 'radio', name: 'story_clustering', value: 'true' }),
@@ -395,9 +396,12 @@ _.extend(NEWSBLUR.ReaderPreferences.prototype, {
                                         $.make('li', [$.make('span', { className: 'NB-feature-check' }, '✓'), 'See which feeds cover the same story']),
                                         $.make('li', [$.make('span', { className: 'NB-feature-check' }, '✓'), 'Reduce clutter in your river of stories'])
                                     ]),
-                                    $.make('div', { className: 'NB-clustering-mark-read-option' }, [
-                                        $.make('input', { id: 'NB-preference-cluster-mark-read', type: 'checkbox', name: 'cluster_mark_read', value: 'true' }),
-                                        $.make('label', { 'for': 'NB-preference-cluster-mark-read' }, 'Mark duplicates as read')
+                                    $.make('div', { className: 'NB-clustering-mark-read-option' + (!NEWSBLUR.Globals.is_archive ? ' NB-disabled' : '') }, [
+                                        $.make('input', { id: 'NB-preference-cluster-mark-read', type: 'checkbox', name: 'cluster_mark_read', value: 'true', disabled: !NEWSBLUR.Globals.is_archive }),
+                                        $.make('label', { 'for': 'NB-preference-cluster-mark-read' }, 'Mark duplicates as read'),
+                                        (!NEWSBLUR.Globals.is_archive && $.make('a', { href: '#', className: 'NB-premium-archive-upgrade-notice NB-premium-link' }, [
+                                            $.make('span', { className: 'NB-archive-badge' }, 'Premium Archive')
+                                        ]))
                                     ])
                                 ])
                             ]),
@@ -408,11 +412,6 @@ _.extend(NEWSBLUR.ReaderPreferences.prototype, {
                                     $.make('span', { className: 'NB-social-card-desc' }, 'Show every story individually without grouping')
                                 ])
                             ]),
-                            (!NEWSBLUR.Globals.is_archive && $.make('div', { className: 'NB-clustering-pref-upgrade-notice' }, [
-                                'Story clustering is a ',
-                                $.make('a', { href: '#', className: 'NB-splash-link NB-premium-link' }, 'premium archive'),
-                                ' feature'
-                            ]))
                         ]),
                         $.make('div', { className: 'NB-preference-label' }, [
                             'Story Clustering',
@@ -1376,41 +1375,18 @@ _.extend(NEWSBLUR.ReaderPreferences.prototype, {
         // reader_preferences.js: Select clustering preferences
         var clustering_enabled = NEWSBLUR.Preferences.story_clustering;
         if (clustering_enabled === undefined || clustering_enabled === null) {
-            clustering_enabled = NEWSBLUR.Globals.is_archive;
+            clustering_enabled = true;
         }
         $('input[name=story_clustering][value=' + !!clustering_enabled + ']', $modal).prop('checked', true);
 
         var cluster_mark_read = NEWSBLUR.Preferences.cluster_mark_read;
         $('input[name=cluster_mark_read]', $modal).prop('checked', !!cluster_mark_read);
 
-        // reader_preferences.js: Load briefing preferences from API
-        if (NEWSBLUR.Globals.is_staff) {
-            this.load_briefing_preferences();
+        var briefing_enabled = NEWSBLUR.Preferences.briefing_enabled;
+        if (briefing_enabled === undefined || briefing_enabled === null) {
+            briefing_enabled = true;
         }
-    },
-
-    load_briefing_preferences: function () {
-        var $modal = this.$modal;
-        $.ajax({
-            url: '/briefing/preferences',
-            type: 'GET',
-            dataType: 'json',
-            success: function (data) {
-                var enabled = data.enabled !== false;
-                $('input[name=briefing_enabled][value=' + enabled + ']', $modal).prop('checked', true);
-            }
-        });
-    },
-
-    save_briefing_preferences: function (form) {
-        // reader_preferences.js: Save briefing enabled/disabled to separate API endpoint
-        $.ajax({
-            url: '/briefing/preferences',
-            type: 'POST',
-            data: { enabled: form['briefing_enabled'] },
-            dataType: 'json'
-        });
-        delete form['briefing_enabled'];
+        $('input[name=briefing_enabled][value=' + !!briefing_enabled + ']', $modal).prop('checked', true);
     },
 
     // ===================
@@ -1656,11 +1632,6 @@ _.extend(NEWSBLUR.ReaderPreferences.prototype, {
         $('.NB-preference-error', this.$modal).text('');
         $('.NB-modal-submit-button', this.$modal).text('Saving...').attr('disabled', true).addClass('NB-disabled');
 
-        // reader_preferences.js: Save briefing preferences separately
-        if (NEWSBLUR.Globals.is_staff) {
-            this.save_briefing_preferences(form);
-        }
-
         this.model.save_preferences(form, function (data) {
             NEWSBLUR.reader.switch_feed_view_unread_view();
             NEWSBLUR.reader.apply_story_styling(true);
@@ -1675,7 +1646,8 @@ _.extend(NEWSBLUR.ReaderPreferences.prototype, {
                 NEWSBLUR.app.feed_list.make_social_feeds();
             }
             if (self.original_preferences['show_global_shared_stories'] != form['show_global_shared_stories'] ||
-                self.original_preferences['show_infrequent_site_stories'] != form['show_infrequent_site_stories']) {
+                self.original_preferences['show_infrequent_site_stories'] != form['show_infrequent_site_stories'] ||
+                self.original_preferences['briefing_enabled'] != form['briefing_enabled']) {
                 NEWSBLUR.app.feed_list.toggle_filter_feeds();
             }
             if (self.original_preferences['ssl'] != form['ssl']) {

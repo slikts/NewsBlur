@@ -541,6 +541,62 @@ class ServerHostnameMiddleware:
         return response
 
 
+class ServerTimingMiddleware:
+    """Adds Server-Timing header for full request lifecycle visibility.
+
+    Must be first in MIDDLEWARE to capture total time including all middleware.
+    Measures three phases:
+      - haproxy_queue: HAProxy accept to Gunicorn worker pickup (requires X-Request-Start header)
+      - middleware: Gunicorn worker pickup to TimingMiddleware (Session, Auth, etc.)
+      - app: TimingMiddleware to response (view processing + DB queries)
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        request._server_timing_start = time.time()
+        response = self.get_response(request)
+
+        now = time.time()
+        total = now - request._server_timing_start
+        metrics = []
+        metrics.append("total;dur=%.1f" % (total * 1000))
+
+        if hasattr(request, "start_time"):
+            middleware_time = request.start_time - request._server_timing_start
+            app_time = now - request.start_time
+            metrics.append("middleware;dur=%.1f" % (middleware_time * 1000))
+            metrics.append("app;dur=%.1f" % (app_time * 1000))
+
+        haproxy_start = request.META.get("HTTP_X_REQUEST_START")
+        if haproxy_start:
+            try:
+                # HAProxy sends %[date()]%[date_us()] = epoch_seconds + microseconds
+                # e.g. "1711152000123456" where 1711152000 is epoch and 123456 is microseconds
+                raw = haproxy_start.strip()
+                if len(raw) > 10:
+                    epoch_s = int(raw[:10])
+                    us = int(raw[10:])
+                    haproxy_ts = epoch_s + us / 1_000_000.0
+                else:
+                    haproxy_ts = float(raw)
+                queue_time = request._server_timing_start - haproxy_ts
+                if queue_time >= 0:
+                    metrics.append("queue;dur=%.1f" % (queue_time * 1000))
+            except (ValueError, TypeError):
+                pass
+
+        if hasattr(request, "sql_times_elapsed"):
+            times = request.sql_times_elapsed
+            for key in ["sql", "mongo"]:
+                if key in times and times[key] > 0:
+                    metrics.append("%s;dur=%.1f" % (key, times[key] * 1000))
+
+        response["Server-Timing"] = ", ".join(metrics)
+        return response
+
+
 class TimingMiddleware:
     def __init__(self, get_response=None):
         self.get_response = get_response
@@ -601,8 +657,10 @@ class UserAgentBanMiddleware:
 
             return HttpResponse(json.encode(data), status=403, content_type="text/json")
 
-        if request.user.is_authenticated and any(
-            username == request.user.username for username in BANNED_USERNAMES
+        if (
+            getattr(request, "user", None)
+            and request.user.is_authenticated
+            and any(username == request.user.username for username in BANNED_USERNAMES)
         ):
             data = {"error": "User banned: %s" % request.user.username, "code": -1}
             ip = request.META.get("HTTP_X_FORWARDED_FOR", request.META.get("REMOTE_ADDR", "unknown"))
@@ -649,6 +707,10 @@ class AttackBanMiddleware:
     # these paths is sanitized downstream by the Scrubber, not here.
     SKIP_PATHS = ("/haproxy", "/dbcheck", "/newsletters/", "/push/")
 
+    # IPs to never ban: localhost and CGNAT range (100.64.0.0/10) used by
+    # internal proxies. Banning shared infrastructure IPs blocks many users.
+    SKIP_IP_PREFIXES = ("127.", "100.64.")
+
     def __init__(self, get_response=None):
         self.get_response = get_response
         self._detector = None
@@ -668,8 +730,18 @@ class AttackBanMiddleware:
         if getattr(settings, "TEST_DEBUG", False):
             return self.get_response(request)
 
+        # Skip attack detection for authenticated users — legitimate users
+        # regularly submit content containing code snippets, template syntax,
+        # and HTML that would trigger false positives (e.g. archived web pages).
+        if hasattr(request, "user") and request.user.is_authenticated:
+            return self.get_response(request)
+
         try:
             ip = self.detector.get_ip(request)
+
+            # Skip internal/infrastructure IPs that should never be banned
+            if any(ip.startswith(prefix) for prefix in self.SKIP_IP_PREFIXES):
+                return self.get_response(request)
 
             # Fast path: check if IP is already banned
             if self.detector.is_banned(ip):

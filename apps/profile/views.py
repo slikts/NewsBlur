@@ -124,6 +124,12 @@ def set_preference(request):
             if preference_value in ["true", "false"]:
                 preference_value = True if preference_value == "true" else False
             preferences[preference_name] = preference_value
+            if preference_name == "briefing_enabled":
+                from apps.briefing.models import MBriefingPreferences
+
+                briefing_prefs = MBriefingPreferences.get_or_create(request.user.pk)
+                briefing_prefs.enabled = bool(preference_value)
+                briefing_prefs.save()
         if preference_name == "intro_page":
             logging.user(request, "~FBAdvancing intro to page ~FM~SB%s" % preference_value)
 
@@ -471,6 +477,9 @@ def paypal_webhooks(request):
             #     user.profile.activate_archive()
             # elif plan_id == Profile.plan_to_paypal_plan_id('pro'):
             #     user.profile.activate_pro()
+            # Prorate refund on old Stripe subscription before canceling
+            if user.profile.stripe_id:
+                user.profile.refund_prorated_stripe_payment()
             user.profile.cancel_premium_stripe()
             user.profile.setup_premium_history()
             if data["event_type"] == "BILLING.SUBSCRIPTION.ACTIVATED":
@@ -1140,6 +1149,27 @@ def manage_usage_billing(request):
 @json.json_view
 def usage_billing_history(request):
     user = request.user
+
+    # Self-hosted: return local spend data without Stripe
+    if user.profile.is_self_hosted_ai and not user.profile.is_usage_billing:
+        import calendar
+
+        current_spend, limit, is_limit_reached = user.profile.get_usage_billing_spend()
+        now = datetime.datetime.utcnow()
+        cycle_start = now.replace(day=1).strftime("%Y-%m-%d")
+        last_day = calendar.monthrange(now.year, now.month)[1]
+        cycle_end = now.replace(day=last_day).strftime("%Y-%m-%d")
+        return {
+            "invoices": [],
+            "upcoming_invoice": None,
+            "current_cycle_spend": round(current_spend, 2),
+            "usage_billing_limit": float(limit) if limit else None,
+            "is_limit_reached": is_limit_reached,
+            "is_self_hosted": True,
+            "cycle_start": cycle_start,
+            "cycle_end": cycle_end,
+        }
+
     if not user.profile.stripe_id or not user.profile.is_usage_billing:
         return {"invoices": [], "upcoming_invoice": None}
 
@@ -1235,7 +1265,7 @@ def save_usage_billing_limit(request):
     from utils.llm_costs import LLMCostTracker
 
     user = request.user
-    if not user.profile.is_usage_billing:
+    if not user.profile.can_use_ai_classifiers:
         return {"code": -1, "message": "Usage billing not enabled"}
 
     limit_str = request.POST.get("limit", "").strip()

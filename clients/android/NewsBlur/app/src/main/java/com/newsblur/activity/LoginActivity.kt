@@ -29,6 +29,7 @@ class LoginActivity : FragmentActivity() {
         setContent {
             NewsBlurTheme(variant = variant) {
                 LoginScreen(
+                    variant = variant,
                     onAuthCompleted = ::onAuthCompleted,
                     onOpenForgotPassword = ::onOpenForgotPassword,
                 )
@@ -42,6 +43,7 @@ class LoginActivity : FragmentActivity() {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
         startActivity(startMain)
+        finish()
     }
 
     private fun onOpenForgotPassword() {

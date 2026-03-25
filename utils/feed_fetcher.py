@@ -378,6 +378,11 @@ class FetchFeed:
                     raw_feed = requests.get(address, headers=headers, timeout=15)
                 except (requests.adapters.ConnectionError, TimeoutError):
                     raw_feed = None
+                if raw_feed and raw_feed.status_code == 304:
+                    logging.debug("   ---> [%-30s] ~FGFeed not modified (304)" % (self.feed.log_title[:30]))
+                    self.feed = self.feed.save()
+                    self.feed.save_feed_history(304, "Not modified")
+                    return FEED_SAME, None
                 if not raw_feed or raw_feed.status_code >= 400:
                     # Handle 429 rate limiting specially - don't retry immediately
                     if raw_feed and raw_feed.status_code == 429:
@@ -464,6 +469,14 @@ class FetchFeed:
                             % (self.feed.log_title[:30])
                         )
                     self.fpf = feedparser.parse(processed_json_feed)
+                    # Inject HTTP metadata for JSON feeds too
+                    self.fpf["status"] = raw_feed.status_code
+                    etag_header = raw_feed.headers.get("ETag")
+                    if etag_header:
+                        self.fpf["etag"] = etag_header
+                    modified_header = raw_feed.headers.get("Last-Modified")
+                    if modified_header:
+                        self.fpf["modified"] = modified_header
                 elif raw_feed.content and raw_feed.status_code < 400:
                     # Normalize header keys to lowercase for feedparser compatibility
                     # feedparser 6.0.12 has a bug where it does case-sensitive lookups for 'content-type'
@@ -488,6 +501,19 @@ class FetchFeed:
                             % (self.feed.log_title[:30])
                         )
                     self.fpf = feedparser.parse(processed_feed, response_headers=response_headers)
+
+                    # When feedparser parses content (not a URL), it doesn't set status/etag/modified.
+                    # Inject these from the requests response so compare_feed_attribute_changes preserves them.
+                    self.fpf["status"] = raw_feed.status_code
+                    etag_header = raw_feed.headers.get("ETag")
+                    if etag_header:
+                        self.fpf["etag"] = etag_header
+                    modified_header = raw_feed.headers.get("Last-Modified")
+                    if modified_header:
+                        self.fpf["modified"] = modified_header
+                    if raw_feed.url != address:
+                        self.fpf["href"] = raw_feed.url
+
                     if self.options["verbose"]:
                         logging.debug(
                             " ---> [%-30s] ~FBFeed fetch status %s: %s length / %s"
@@ -1198,10 +1224,12 @@ class ProcessFeed:
         hub_url = None
         self_url = self.feed.feed_address
         for link in self.fpf.feed.links:
-            if link["rel"] == "hub" and not hub_url:
-                hub_url = link["href"]
-            elif link["rel"] == "self":
-                self_url = link["href"]
+            if not isinstance(link, dict):
+                continue
+            if link.get("rel") == "hub" and not hub_url:
+                hub_url = link.get("href")
+            elif link.get("rel") == "self":
+                self_url = link.get("href")
         if not hub_url and "youtube.com" in self_url:
             hub_url = "https://pubsubhubbub.appspot.com/subscribe"
             channel_id = self_url.split("channel_id=")

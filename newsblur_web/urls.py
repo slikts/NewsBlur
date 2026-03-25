@@ -83,6 +83,11 @@ urlpatterns = [
     re_path(r"^features/archive/?$", static_views.feature_archive, name="feature-archive"),
     re_path(r"^features/saved-stories/?$", static_views.feature_saved_stories, name="feature-saved-stories"),
     re_path(r"^features/native-apps/?$", static_views.feature_native_apps, name="feature-native-apps"),
+    re_path(
+        r"^features/story-clustering/?$",
+        static_views.feature_story_clustering,
+        name="feature-story-clustering",
+    ),
     re_path(r"^compare/feedly/?", static_views.compare_feedly, name="compare-feedly"),
     re_path(r"^compare/inoreader/?", static_views.compare_inoreader, name="compare-inoreader"),
     re_path(r"^compare/readwise-reader/?", static_views.compare_readwise, name="compare-readwise"),

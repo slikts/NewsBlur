@@ -127,7 +127,9 @@ SHELL_PLUS_IMPORTS = [
 # SHELL_PLUS_PRINT_SQL = True
 
 MIDDLEWARE = (
+    "apps.profile.middleware.ServerTimingMiddleware",
     "utils.prometheus_middleware.PrometheusBeforeMiddlewareWrapper",
+    "apps.profile.middleware.UserAgentBanMiddleware",
     "django.middleware.gzip.GZipMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "subdomains.middleware.SubdomainMiddleware",
@@ -137,7 +139,6 @@ MIDDLEWARE = (
     "apps.profile.middleware.AttackBanMiddleware",
     "apps.profile.middleware.TimingMiddleware",
     "apps.profile.middleware.LastSeenMiddleware",
-    "apps.profile.middleware.UserAgentBanMiddleware",
     "apps.profile.middleware.ScannerTrackingMiddleware",
     "apps.profile.middleware.IPRateTrackingMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -577,6 +578,11 @@ CELERY_BEAT_SCHEDULE = {
     },
     "email-feed-limit-notifications": {
         "task": "email-feed-limit-notifications",
+        "schedule": datetime.timedelta(hours=24),
+        "options": {"queue": "cron_queue"},
+    },
+    "email-premium-renewal-notice": {
+        "task": "email-premium-renewal-notice",
         "schedule": datetime.timedelta(hours=24),
         "options": {"queue": "cron_queue"},
     },

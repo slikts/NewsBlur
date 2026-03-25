@@ -14,6 +14,8 @@ body {
     height: 100%;
     overflow: hidden;
     text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     background-color: white;
     -webkit-overflow-scrolling: touch;
     scrollbar-color: #C2C2C2 #FAFAFA;
@@ -815,9 +817,11 @@ hr {
 .NB-search-header.NB-webfeed-paused {
     padding-left: 8px;
 }
+
 .NB-search-header.NB-webfeed-paused .NB-search-header-icon {
     display: none;
 }
+
 .NB-webfeed-paused-header {
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.07) 0%, rgba(139, 92, 246, 0.07) 100%);
     border: 1px solid rgba(99, 102, 241, 0.15);
@@ -827,6 +831,7 @@ hr {
     display: block;
     position: relative;
 }
+
 .NB-webfeed-paused-icon {
     width: 20px;
     height: 20px;
@@ -840,6 +845,7 @@ hr {
     -webkit-mask-size: 16px;
     mask-size: 16px;
 }
+
 .NB-webfeed-paused-message {
     color: #4338ca;
     font-size: 13px;
@@ -847,6 +853,7 @@ hr {
     line-height: 1.4;
     margin-bottom: 12px;
 }
+
 .NB-webfeed-paused-button {
     background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     color: white;
@@ -859,12 +866,14 @@ hr {
     display: inline-block;
     transition: opacity 0.15s ease, transform 0.15s ease;
 }
+
 .NB-webfeed-paused-button:hover {
     opacity: 0.9;
     transform: translateY(-1px);
 }
+
 .NB-webfeed-paused-button:active {
-    transform: translateY(0);
+    transform: translateY(0) scale(0.96);
 }
 
 .NB-feedlist .feed .NB-feed-highlight {
@@ -941,7 +950,7 @@ img.feed_favicon {
     left: 6px;
     width: 16px;
     height: 16px;
-    transition: all 0.36s ease-out;
+    transition: opacity 0.36s ease-out, transform 0.36s ease-out;
 }
 
 .NB-density-compact .NB-feedlist img.feed_favicon {
@@ -1325,8 +1334,8 @@ img.feed_favicon {
     display: none;
     line-height: 14px;
     border-radius: 4px;
-
-    transition: all 0.36s ease-out;
+    font-variant-numeric: tabular-nums;
+    transition: background-color 0.36s ease-out, opacity 0.36s ease-out;
     /*    border-top: 1px solid rgba(255, 255, 255, .4);*/
     /* border-bottom: 1px solid rgba(0, 0, 0, .1); */
 }
@@ -2340,7 +2349,7 @@ img.feed_favicon {
 }
 
 .NB-discover-popover .NB-discover-index-button:active {
-    transform: translateY(0);
+    transform: translateY(0) scale(0.96);
 }
 
 .NB-discover-popover .NB-discover-index-button.NB-disabled {
@@ -2775,11 +2784,10 @@ img.feed_favicon {
     padding: 12px 4px 12px 4px;
     position: relative;
     width: 100%;
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
     box-sizing: border-box;
     overflow-wrap: break-word;
     word-break: break-word;
+    text-wrap: pretty;
     transition: padding 0.36s ease-out, margin 0.36s ease-out, top 0.36s ease-out;
 }
 
@@ -3076,6 +3084,7 @@ img.feed_favicon {
     margin: 2px 0 4px 12px;
     overflow: hidden;
 }
+
 .NB-story-cluster-source {
     display: flex;
     align-items: center;
@@ -3087,6 +3096,7 @@ img.feed_favicon {
     position: relative;
     overflow: hidden;
 }
+
 .NB-story-cluster-source .NB-storytitles-feed-border-inner,
 .NB-story-cluster-source .NB-storytitles-feed-border-outer {
     position: absolute;
@@ -3095,19 +3105,23 @@ img.feed_favicon {
     left: 0;
     top: 0;
 }
+
 .NB-story-cluster-source .NB-storytitles-feed-border-inner {
     left: 4px;
 }
+
 .NB-story-cluster-source:hover {
     background: rgba(0, 0, 0, 0.04);
     color: #303030;
 }
+
 .NB-story-cluster-source img,
 .NB-story-cluster-source .feed_favicon {
     width: 16px;
     height: 16px;
     flex-shrink: 0;
 }
+
 .NB-story-cluster-source .NB-cluster-feed-title {
     font-weight: 600;
     white-space: nowrap;
@@ -3115,6 +3129,7 @@ img.feed_favicon {
     text-overflow: ellipsis;
     max-width: 40%;
 }
+
 .NB-story-cluster-source .NB-cluster-story-title {
     white-space: nowrap;
     overflow: hidden;
@@ -3122,6 +3137,7 @@ img.feed_favicon {
     flex: 1;
     min-width: 0;
 }
+
 .NB-story-cluster-source .NB-cluster-date {
     color: #999;
     font-size: 10px;
@@ -3134,16 +3150,20 @@ img.feed_favicon {
     background: rgba(255, 255, 255, 0.03);
     border-radius: 4px;
 }
+
 .NB-dark .NB-story-cluster-source {
     color: #c8c8c8;
 }
+
 .NB-dark .NB-story-cluster-source:hover {
     background: rgba(255, 255, 255, 0.08);
     color: #e0e0e0;
 }
+
 .NB-dark .NB-story-cluster-source .NB-cluster-date {
     color: #999;
 }
+
 .NB-dark .NB-story-cluster-source .NB-cluster-feed-title {
     color: #d0d0d0;
 }
@@ -3157,12 +3177,15 @@ img.feed_favicon {
     background-position: center;
     background-repeat: no-repeat;
 }
+
 .NB-story-cluster-source.NB-story-positive .NB-cluster-sentiment {
     background-image: url(/media/embed/icons/nouns/indicator-focus.svg);
 }
+
 .NB-story-cluster-source.NB-story-neutral .NB-cluster-sentiment {
     background-image: url(/media/embed/icons/nouns/indicator-unread.svg);
 }
+
 .NB-story-cluster-source.NB-story-negative .NB-cluster-sentiment {
     background-image: url(/media/embed/icons/nouns/indicator-hidden.svg);
 }
@@ -3171,23 +3194,29 @@ img.feed_favicon {
 .NB-story-cluster-source.read {
     color: #969696;
 }
+
 .NB-story-cluster-source.read .NB-cluster-story-title {
     font-weight: normal;
 }
+
 .NB-story-cluster-source.read .NB-cluster-sentiment {
     opacity: .15;
 }
+
 .NB-story-cluster-source.read .NB-storytitles-feed-border-inner,
 .NB-story-cluster-source.read .NB-storytitles-feed-border-outer {
     opacity: .06;
 }
+
 .NB-story-cluster-source.read .NB-cluster-story-image {
     opacity: 0.6;
 }
+
 .NB-story-cluster-source.read img,
 .NB-story-cluster-source.read .feed_favicon {
     opacity: 0.35;
 }
+
 .NB-dark .NB-story-cluster-source.read {
     color: #707070;
 }
@@ -3196,9 +3225,11 @@ img.feed_favicon {
 .NB-dark .NB-story-cluster-source.NB-story-positive .NB-cluster-sentiment {
     filter: brightness(1.4);
 }
+
 .NB-dark .NB-story-cluster-source.NB-story-negative .NB-cluster-sentiment {
     filter: brightness(1.4);
 }
+
 .NB-dark .NB-story-cluster-source.NB-story-neutral .NB-cluster-sentiment {
     filter: brightness(1.3);
 }
@@ -3212,15 +3243,18 @@ img.feed_favicon {
     background-position: center;
     border-radius: 3px;
 }
+
 /* Left alignment - move image before title, after favicon */
 .NB-image-preview-small-left .NB-story-cluster-source .NB-cluster-story-title,
 .NB-image-preview-large-left .NB-story-cluster-source .NB-cluster-story-title {
     order: 2;
 }
+
 .NB-image-preview-small-left .NB-story-cluster-source .NB-cluster-story-image,
 .NB-image-preview-large-left .NB-story-cluster-source .NB-cluster-story-image {
     order: 1;
 }
+
 .NB-image-preview-small-left .NB-story-cluster-source .NB-cluster-date,
 .NB-image-preview-large-left .NB-story-cluster-source .NB-cluster-date {
     order: 3;
@@ -3273,10 +3307,12 @@ img.feed_favicon {
     width: 16px;
     height: 16px;
 }
+
 .NB-story-cluster-sources .NB-story-title.NB-story-title-cluster .NB-story-feed .feed_favicon {
     width: 16px;
     height: 16px;
 }
+
 .NB-story-cluster-sources .NB-story-title.NB-story-title-cluster .NB-story-feed .feed_title {
     display: none;
 }
@@ -3289,15 +3325,18 @@ img.feed_favicon {
     width: 16px;
     height: 16px;
 }
+
 /* Reposition indicator icons within the narrower sentiment div */
 .NB-story-title.NB-story-title-cluster.NB-story-positive .NB-storytitles-sentiment {
     background-position: 2px 2px;
     background-size: 10px;
 }
+
 .NB-story-title.NB-story-title-cluster.NB-story-neutral .NB-storytitles-sentiment {
     background-position: 3px 3px;
     background-size: 8px;
 }
+
 .NB-story-title.NB-story-title-cluster.NB-story-negative .NB-storytitles-sentiment {
     background-position: 3px 3px;
     background-size: 8px;
@@ -3309,6 +3348,7 @@ img.feed_favicon {
     right: -44px;
     top: 0;
 }
+
 /* Left image positioning */
 .NB-image-preview-small-left .NB-story-cluster-sources .NB-story-title .NB-storytitles-story-image,
 .NB-image-preview-large-left .NB-story-cluster-sources .NB-story-title .NB-storytitles-story-image,
@@ -3334,29 +3374,37 @@ img.feed_favicon {
 .NB-story-title.NB-story-title-cluster.read a.story_title {
     color: #272727;
 }
+
 .NB-story-title.NB-story-title-cluster.read .NB-storytitles-feed-border-inner,
 .NB-story-title.NB-story-title-cluster.read .NB-storytitles-feed-border-outer {
     opacity: 1;
 }
+
 .NB-story-title.NB-story-title-cluster.read .NB-storytitles-story-image {
     opacity: 1;
 }
+
 .NB-story-title.NB-story-title-cluster.read .NB-storytitles-sentiment {
     opacity: 1;
 }
+
 .NB-story-title.NB-story-title-cluster.read .feed_favicon {
     opacity: .65;
 }
+
 .NB-story-title.NB-story-title-cluster.read .story_date {
     color: #888785;
 }
+
 .NB-story-title.NB-story-title-cluster.read .NB-storytitles-author {
     color: inherit;
     font-weight: inherit;
 }
+
 .NB-story-title.NB-story-title-cluster.read .NB-middot {
     color: inherit;
 }
+
 .NB-story-title.NB-story-title-cluster.read .NB-storytitles-content-preview {
     color: #888785;
 }
@@ -3376,32 +3424,40 @@ img.feed_favicon {
     border-top: none;
     border-bottom: none;
 }
+
 .NB-dark .NB-story-title.NB-story-title-cluster:hover,
 .NB-dark .NB-story-title.NB-story-title-cluster:hover:not(.NB-selected) {
     background-color: rgba(255, 255, 255, 0.06);
     border-top: none;
     border-bottom: none;
 }
+
 .NB-dark .NB-story-title.NB-story-title-cluster .NB-storytitles-sentiment {
     filter: brightness(1.4);
 }
+
 .NB-dark .NB-story-title.NB-story-title-cluster.read:hover:not(.NB-selected) {
     background-color: rgba(255, 255, 255, 0.04);
 }
+
 /* Remove ALL read-state dimming on cluster rows in dark mode */
 .NB-dark .NB-story-title.NB-story-title-cluster.read a.story_title {
     color: #ddd;
 }
+
 .NB-dark .NB-story-title.NB-story-title-cluster.read .NB-storytitles-feed-border-inner,
 .NB-dark .NB-story-title.NB-story-title-cluster.read .NB-storytitles-feed-border-outer {
     opacity: 1;
 }
+
 .NB-dark .NB-story-title.NB-story-title-cluster.read .NB-storytitles-author {
     color: inherit;
 }
+
 .NB-dark .NB-story-title.NB-story-title-cluster.read .story_date {
     color: inherit;
 }
+
 .NB-dark .read .NB-story-title-cluster .NB-storytitles-content-preview,
 .NB-dark .NB-story-title.NB-story-title-cluster.read .NB-storytitles-content-preview {
     color: inherit;
@@ -3413,12 +3469,14 @@ img.feed_favicon {
     border-top: 1px solid #E0E0E0;
     padding-top: 16px;
 }
+
 .NB-story-cluster-detail-header {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-bottom: 12px;
 }
+
 .NB-story-cluster-detail-title {
     font-size: 13px;
     font-weight: 600;
@@ -3426,9 +3484,11 @@ img.feed_favicon {
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
+
 .NB-story-cluster-detail-item {
     border-bottom: 1px solid #E8EDF0;
 }
+
 .NB-story-cluster-detail-item:last-child {
     border-bottom: none;
 }
@@ -3437,14 +3497,162 @@ img.feed_favicon {
 .NB-dark .NB-story-cluster-detail {
     border-top-color: #404040;
 }
+
 .NB-dark .NB-story-cluster-detail-title {
     color: #909090;
 }
+
 .NB-dark .NB-story-cluster-detail-item {
     border-bottom-color: #3a3a3a;
 }
+
 .NB-dark .NB-story-cluster-detail-item:hover {
     color: #909090;
+}
+
+/* Favicon in cluster detail story titles */
+.NB-story-cluster-detail .NB-story-cluster-detail-item .NB-story-title {
+    padding-left: 66px;
+}
+
+.NB-story-cluster-detail-item .NB-story-title .NB-story-feed {
+    display: block;
+    left: -47px;
+    top: 14px;
+    width: 16px;
+    height: 16px;
+}
+
+.NB-story-cluster-detail-item .NB-story-title .NB-story-feed .feed_favicon {
+    width: 16px;
+    height: 16px;
+}
+
+.NB-story-cluster-detail-item .NB-story-title .NB-story-feed .feed_title {
+    display: none;
+}
+
+.NB-story-cluster-detail-item .NB-story-title-list.NB-story-title .story_date {
+    position: static;
+    width: auto;
+}
+
+/* Clustering upgrade pill in header (shown when only 1 cluster site) */
+.NB-clustering-detail-upgrade-pill {
+    display: inline-block;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-decoration: none;
+    cursor: pointer;
+    margin-left: 6px;
+    transition: filter 0.15s;
+}
+
+.NB-clustering-detail-upgrade-pill:hover {
+    filter: brightness(1.15);
+    color: white;
+}
+
+/* Info icon + tooltip for clustering explanation */
+.NB-clustering-detail-info {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: auto;
+}
+
+.NB-clustering-detail-info-icon {
+    font-size: 13px;
+    color: #b0b0b0;
+    cursor: default;
+    line-height: 1;
+}
+
+.NB-clustering-detail-info-tooltip {
+    display: none;
+    position: fixed;
+    width: 260px;
+    padding: 10px 12px;
+    background: #333;
+    color: #e0e0e0;
+    font-size: 11.5px;
+    line-height: 1.5;
+    border-radius: 6px;
+    white-space: normal;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: normal;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    z-index: 10000;
+    pointer-events: none;
+}
+
+.NB-clustering-detail-info-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    right: 6px;
+    width: 10px;
+    height: 10px;
+    background: #333;
+    transform: rotate(45deg);
+}
+
+.NB-dark .NB-clustering-detail-info-icon {
+    color: #666;
+}
+
+.NB-dark .NB-clustering-detail-info-tooltip {
+    background: #1a1a1a;
+    border: 1px solid #333;
+}
+
+.NB-dark .NB-clustering-detail-info-tooltip::after {
+    background: #1a1a1a;
+    border-right: 1px solid #333;
+    border-bottom: 1px solid #333;
+}
+
+/* Cluster locked upsell row (non-archive tier) */
+.NB-cluster-locked-upsell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px 10px 66px;
+    cursor: pointer;
+    font-size: 12px;
+    border-top: 1px solid #E8EDF0;
+    transition: filter 0.15s ease;
+}
+
+.NB-cluster-locked-text {
+    font-size: 12px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.NB-cluster-locked-upsell:hover {
+    filter: brightness(1.15);
+}
+
+.NB-dark .NB-cluster-locked-upsell {
+    border-top-color: #3a3a3a;
+}
+
+.NB-dark .NB-cluster-locked-text {
+    background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .NB-story-title .NB-story-feed {
@@ -3625,6 +3833,7 @@ img.feed_favicon {
     color: #888785;
     font-weight: normal;
     font-size: 12px;
+    font-variant-numeric: tabular-nums;
 }
 
 .NB-story-title-list.NB-story-title .story_date {
@@ -3699,13 +3908,12 @@ img.feed_favicon {
     /* background-color: #e8f3ff; */
     border-top: 1px solid rgb(255 254 237);
     border-bottom: 1px solid rgb(249 248 222);
-    transform: scale(0.97);
+    transform: scale(0.96);
     border-radius: 8px;
 }
 
 .NB-story-title:hover:not(.NB-selected) {
     background-color: #F7F7F6;
-    /*    border-top: 1px solid transparent;*/
 
     transition: transform 0.12s ease-out, border-radius 0.12s ease-out, height 0.36s ease-out, background-color 0s ease-out;
 
@@ -3848,7 +4056,9 @@ img.feed_favicon {
     grid-column-end: -1;
 }
 
-.NB-layout-grid .NB-story-title-container {}
+.NB-layout-grid .NB-story-title-container {
+    min-width: 0;
+}
 
 .NB-layout-grid .NB-story-title-container.NB-selected {
     margin: 0 -2rem;
@@ -4841,6 +5051,8 @@ body {
     width: auto !important;
     height: auto;
     /* See http://www.newsblur.com/site/1031643/le-21me for width: auto, height: auto */
+    outline: 1px solid rgba(0, 0, 0, 0.06);
+    outline-offset: -1px;
 }
 
 .NB-feed-story .NB-feed-story-content img.NB-medium-image {
@@ -4977,7 +5189,7 @@ body {
     font-weight: bold;
     font-size: 1.4em;
     line-height: 1.2em;
-    /*    text-shadow: 1px 1px 0 rgba(255, 255, 255, .5);*/
+    text-wrap: balance;
 }
 
 .NB-feed-story.read a.NB-feed-story-title {
@@ -5322,12 +5534,13 @@ body {
 
 /* AI Classifier Pills */
 .NB-feed-story .NB-feed-story-ai-classifiers {
-    display: inline;
-    line-height: 22px;
+    display: flex;
+    align-items: center;
+    margin: 5px 0 0;
 }
 
 .NB-feed-story .NB-feed-story-ai-classifiers .NB-middot {
-    margin: 0 2px;
+    margin: 0 6px 0 2px;
     color: #B0B0A0;
 }
 
@@ -5338,7 +5551,7 @@ body {
     font-size: 12px;
     border-radius: 4px;
     padding: 1px 5px;
-    margin: 0 4px 4px 0;
+    margin: 0 4px 0 0;
     line-height: 14px;
     background-color: rgba(0, 0, 0, .1);
     color: #959B8B;
@@ -5564,6 +5777,7 @@ body {
 .NB-feed-story .NB-feed-story-content {
     padding: 24px 0 0;
     min-height: 12px;
+    text-wrap: pretty;
 }
 
 .NB-pref-story-position-center .NB-feed-story .NB-story-content-positioning-wrapper {
@@ -5844,7 +6058,6 @@ body {
     padding: 0 236px 32px 28px;
     max-width: 700px;
     clear: both;
-    background-color: white;
     position: relative;
 }
 
@@ -6400,7 +6613,11 @@ body {
     background-color: white;
     border-radius: 3px;
     user-select: none;
-    transition: background-color 0.36s ease-out;
+    transition: background-color 0.36s ease-out, transform 0.1s ease;
+}
+
+.NB-sideoption:active {
+    transform: scale(0.96);
 }
 
 .NB-narrow-content .NB-sideoption {
@@ -8821,10 +9038,7 @@ form.opml_import_form input {
     margin: 0;
     padding: 12px 12px 12px 20px;
     display: block;
-    -webkit-transition: all 0.36s ease-out;
-    -moz-transition: all 0.36s ease-out;
-    -o-transition: all 0.36s ease-out;
-    -ms-transition: all 0.36s ease-out;
+    transition: background 0.36s ease-out;
     background: transparent url('/media/embed/reader/spacer_16.png') no-repeat 0 -17px;
     background-size: 16px;
     font-weight: bold;
@@ -9558,6 +9772,7 @@ form.opml_import_form input {
         opacity: 0;
         transform: translateY(-4px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -11107,7 +11322,7 @@ form.opml_import_form input {
     border: 1px solid #E0E0E0;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .NB-add-discover-source:hover {
@@ -11155,7 +11370,7 @@ form.opml_import_form input {
     padding: 11px 14px;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease;
     border: 1px solid;
     background: transparent;
 }
@@ -11194,11 +11409,11 @@ form.opml_import_form input {
     background: #FDF6F0;
 }
 
-.NB-add-discover-popular > img {
+.NB-add-discover-popular>img {
     filter: brightness(0) saturate(100%) invert(48%) sepia(60%) saturate(500%) hue-rotate(350deg);
 }
 
-.NB-add-discover-popular > span {
+.NB-add-discover-popular>span {
     color: #C06520;
 }
 
@@ -11423,6 +11638,7 @@ form.opml_import_form input {
 .NB-autocomplete-freshness.NB-freshness-active .NB-freshness-dot {
     background: #4CAF50;
 }
+
 .NB-autocomplete-freshness.NB-freshness-active .NB-freshness-label {
     color: #4CAF50;
 }
@@ -11430,6 +11646,7 @@ form.opml_import_form input {
 .NB-autocomplete-freshness.NB-freshness-stale .NB-freshness-dot {
     background: #F9A825;
 }
+
 .NB-autocomplete-freshness.NB-freshness-stale .NB-freshness-label {
     color: #B8860B;
 }
@@ -11437,6 +11654,7 @@ form.opml_import_form input {
 .NB-autocomplete-freshness.NB-freshness-none .NB-freshness-dot {
     background: #C0C0C0;
 }
+
 .NB-autocomplete-freshness.NB-freshness-none .NB-freshness-label {
     color: #B0B0B0;
 }
@@ -12480,7 +12698,8 @@ form.opml_import_form input {
     margin-top: 4px;
 }
 
-.NB-classifier-this-story+.NB-classifier-feed-items::before {
+.NB-classifier-this-story+.NB-classifier-feed-items::before,
+.NB-classifier-feed-items:first-child::before {
     content: 'More from this site';
     display: block;
     font-size: 9px;
@@ -12507,7 +12726,8 @@ form.opml_import_form input {
 }
 
 .NB-classifier-this-story+.NB-classifier-folder-items::before,
-.NB-classifier-feed-items+.NB-classifier-folder-items::before {
+.NB-classifier-feed-items+.NB-classifier-folder-items::before,
+.NB-classifier-folder-items:first-child::before {
     content: 'More from this folder';
     display: block;
     font-size: 9px;
@@ -12528,7 +12748,8 @@ form.opml_import_form input {
 
 .NB-classifier-this-story+.NB-classifier-global-items::before,
 .NB-classifier-feed-items+.NB-classifier-global-items::before,
-.NB-classifier-folder-items+.NB-classifier-global-items::before {
+.NB-classifier-folder-items+.NB-classifier-global-items::before,
+.NB-classifier-global-items:first-child::before {
     content: 'More from global filters';
     display: block;
     font-size: 9px;
@@ -12591,7 +12812,7 @@ form.opml_import_form input {
     color: #666;
     cursor: pointer;
     border-radius: 4px;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     user-select: none;
 }
 
@@ -12888,8 +13109,15 @@ h5.NB-classifier-section-header {
 }
 
 @keyframes scope-notice-in {
-    0% { opacity: 0; transform: translateX(10px); }
-    100% { opacity: 1; transform: translateX(0); }
+    0% {
+        opacity: 0;
+        transform: translateX(10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 /* Shake animation on type badge when scope change is denied */
@@ -12898,13 +13126,33 @@ h5.NB-classifier-section-header {
 }
 
 @keyframes badge-shake {
-    0%, 100% { transform: translateX(0); }
-    15% { transform: translateX(-3px); }
-    30% { transform: translateX(3px); }
-    45% { transform: translateX(-2px); }
-    60% { transform: translateX(2px); }
-    75% { transform: translateX(-1px); }
-    90% { transform: translateX(1px); }
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    15% {
+        transform: translateX(-3px);
+    }
+
+    30% {
+        transform: translateX(3px);
+    }
+
+    45% {
+        transform: translateX(-2px);
+    }
+
+    60% {
+        transform: translateX(2px);
+    }
+
+    75% {
+        transform: translateX(-1px);
+    }
+
+    90% {
+        transform: translateX(1px);
+    }
 }
 
 /* Flash toggle amber when denied */
@@ -13373,8 +13621,13 @@ h5.NB-classifier-section-header {
 }
 
 @keyframes image-filter-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
 }
 
 .NB-image-filter-thumb-match {
@@ -14331,7 +14584,7 @@ h5.NB-classifier-section-header {
     border: 1px solid #ddd;
     border-radius: 12px;
     text-decoration: none;
-    transition: all 0.15s ease;
+    transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 
 .NB-module-hide:hover {
@@ -14477,6 +14730,7 @@ h5.NB-classifier-section-header {
     font-size: 18px;
     color: #0D003C;
     text-shadow: 1px 1px 0 #E8E8E8;
+    font-variant-numeric: tabular-nums;
     font-weight: bold;
 }
 
@@ -16229,7 +16483,7 @@ h5.NB-classifier-section-header {
     border: 1px solid #D0D2CC;
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .NB-menu-ask-ai-segment:hover {
@@ -16322,7 +16576,7 @@ h5.NB-classifier-section-header {
     border-radius: 4px 0 0 4px;
     color: white;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease;
 }
 
 .NB-menu-ask-ai-submit-menu .NB-menu-ask-ai-custom-submit:hover {
@@ -16339,7 +16593,7 @@ h5.NB-classifier-section-header {
     cursor: pointer;
     display: flex;
     align-items: center;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease;
 }
 
 .NB-menu-ask-ai-submit-menu .NB-menu-ask-ai-submit-dropdown-trigger:hover {
@@ -16378,7 +16632,7 @@ h5.NB-classifier-section-header {
     opacity: 0;
     visibility: hidden;
     transform: translateY(4px);
-    transition: all 0.15s ease;
+    transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
     z-index: 100;
 }
 
@@ -16398,7 +16652,7 @@ h5.NB-classifier-section-header {
     border: 1px solid #D0D2CC;
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
     flex-shrink: 0;
 }
 
@@ -16518,7 +16772,7 @@ h5.NB-classifier-section-header {
     color: #808080;
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     user-select: none;
 }
 
@@ -16672,7 +16926,7 @@ h5.NB-classifier-section-header {
     align-items: center;
     gap: 6px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     box-sizing: border-box;
 }
 
@@ -16703,7 +16957,7 @@ h5.NB-classifier-section-header {
     border-radius: 4px 0 0 4px;
     color: white;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease;
     margin: 0;
     box-shadow: none;
     box-sizing: border-box;
@@ -16723,7 +16977,7 @@ h5.NB-classifier-section-header {
     cursor: pointer;
     display: flex;
     align-items: center;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease;
     box-sizing: border-box;
 }
 
@@ -16764,7 +17018,7 @@ h5.NB-classifier-section-header {
     border-radius: 4px 0 0 4px;
     color: white;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease;
     margin: 0;
     box-shadow: none;
     box-sizing: border-box;
@@ -16784,7 +17038,7 @@ h5.NB-classifier-section-header {
     cursor: pointer;
     display: flex;
     align-items: center;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease;
     box-sizing: border-box;
 }
 
@@ -16823,7 +17077,7 @@ h5.NB-classifier-section-header {
     opacity: 0;
     visibility: hidden;
     transform: translateY(4px);
-    transition: all 0.15s ease;
+    transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
     z-index: 100;
 }
 
@@ -16911,7 +17165,7 @@ h5.NB-classifier-section-header {
     border: 1px solid #D0D2CC;
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
     flex-shrink: 0;
     box-sizing: border-box;
 }
@@ -17478,7 +17732,7 @@ h5.NB-classifier-section-header {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, transform 0.15s ease;
     background-color: rgba(0, 0, 0, 0.06);
     position: absolute;
     top: 12px;
@@ -19414,11 +19668,7 @@ h5.NB-classifier-section-header {
 .carousel .item {
     display: none;
     position: relative;
-    -webkit-transition: 0.6s ease-in-out left;
-    -moz-transition: 0.6s ease-in-out left;
-    -ms-transition: 0.6s ease-in-out left;
-    -o-transition: 0.6s ease-in-out left;
-    transition: 0.6s ease-in-out left;
+    transition: left 0.6s ease-in-out;
 }
 
 .carousel .item>img {
@@ -19948,7 +20198,7 @@ h5.NB-classifier-section-header {
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 4px;
     color: #505050;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .NB-modal-feedchooser .NB-feedchooser-info-reset:hover {
@@ -20109,7 +20359,7 @@ h5.NB-classifier-section-header {
     border-radius: 6px;
     margin-bottom: 12px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .NB-modal-feedchooser .NB-feedchooser-upgrade-inline:hover {
@@ -20273,10 +20523,7 @@ h5.NB-classifier-section-header {
     color: #9BA6CC;
     display: none;
 
-    -webkit-transition: all .24s ease-out;
-    -moz-transition: all .24s ease-out;
-    -o-transition: all .24s ease-out;
-    -ms-transition: all .24s ease-out;
+    transition: color .24s ease-out;
 }
 
 .NB-modal-feedchooser .NB-feedchooser-dollar-value.NB-selected {
@@ -20298,10 +20545,7 @@ h5.NB-classifier-section-header {
     display: block;
     opacity: 0.1;
 
-    -webkit-transition: all .24s ease-out;
-    -moz-transition: all .24s ease-out;
-    -o-transition: all .24s ease-out;
-    -ms-transition: all .24s ease-out;
+    transition: opacity .24s ease-out;
 
 }
 
@@ -20758,7 +21002,7 @@ h5.NB-classifier-section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .NB-modal-feedchooser .NB-feedchooser-upgrade-banner:hover {
@@ -20871,7 +21115,7 @@ h5.NB-classifier-section-header {
     box-shadow:
         0 1px 3px rgba(0, 0, 0, 0.04),
         0 4px 12px rgba(0, 0, 0, 0.03);
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
 }
 
@@ -21272,81 +21516,93 @@ h5.NB-classifier-section-header {
 }
 
 .NB-premium-tier-features-archive li.NB-2 .NB-premium-bullet-image {
+    background-image: url('/media/embed/icons/nouns/web-feed.svg');
+    filter: invert(35%) sepia(80%) saturate(2000%) hue-rotate(220deg) brightness(90%) contrast(100%);
+    /* indigo-purple */
+}
+
+.NB-premium-tier-features-archive li.NB-3 .NB-premium-bullet-image {
+    background-image: url('/media/embed/icons/nouns/stack.svg');
+    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(95%) contrast(100%);
+    /* green */
+}
+
+.NB-premium-tier-features-archive li.NB-4 .NB-premium-bullet-image {
+    background-image: url('/media/img/icons/nouns/briefing.svg');
+    filter: invert(25%) sepia(85%) saturate(2500%) hue-rotate(280deg) brightness(85%) contrast(105%);
+    /* violet */
+}
+
+.NB-premium-tier-features-archive li.NB-5 .NB-premium-bullet-image {
     background-image: url('/media/embed/icons/icons8/icons8-relax-with-book-100.png');
     filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(95%) contrast(100%);
     /* green */
 }
 
-.NB-premium-tier-features-archive li.NB-3 .NB-premium-bullet-image {
+.NB-premium-tier-features-archive li.NB-6 .NB-premium-bullet-image {
     background-image: url('/media/embed/icons/nouns/mark-read.svg');
     filter: invert(55%) sepia(80%) saturate(2000%) hue-rotate(170deg) brightness(95%) contrast(95%);
     /* cyan */
 }
 
-.NB-premium-tier-features-archive li.NB-4 .NB-premium-bullet-image {
+.NB-premium-tier-features-archive li.NB-7 .NB-premium-bullet-image {
     background-image: url('/media/embed/icons/icons8/icons8-filing-cabinet-100.png');
     filter: invert(45%) sepia(70%) saturate(1200%) hue-rotate(10deg) brightness(95%) contrast(100%);
     /* brown-orange */
 }
 
-.NB-premium-tier-features-archive li.NB-5 .NB-premium-bullet-image {
+.NB-premium-tier-features-archive li.NB-8 .NB-premium-bullet-image {
     background-image: url('/media/embed/icons/icons8/icons8-quadcopter-100.png');
     filter: invert(37%) sepia(93%) saturate(2000%) hue-rotate(200deg) brightness(95%) contrast(100%);
     /* blue */
 }
 
-.NB-premium-tier-features-archive li.NB-6 .NB-premium-bullet-image {
+.NB-premium-tier-features-archive li.NB-9 .NB-premium-bullet-image {
     background-image: url('/media/embed/icons/nouns/train.svg');
     filter: invert(37%) sepia(93%) saturate(2000%) hue-rotate(200deg) brightness(95%) contrast(100%);
     /* blue */
 }
 
-.NB-premium-tier-features-archive li.NB-7 .NB-premium-bullet-image {
+.NB-premium-tier-features-archive li.NB-10 .NB-premium-bullet-image {
     background-image: url('/media/embed/icons/nouns/direction_black.svg');
     filter: invert(25%) sepia(85%) saturate(2500%) hue-rotate(280deg) brightness(85%) contrast(105%);
     /* violet */
 }
 
-.NB-premium-tier-features-archive li.NB-8 .NB-premium-bullet-image {
+.NB-premium-tier-features-archive li.NB-11 .NB-premium-bullet-image {
     background-image: url('/media/embed/icons/icons8/icons8-rss-100.png');
     filter: invert(57%) sepia(98%) saturate(1000%) hue-rotate(360deg) brightness(103%) contrast(105%);
     /* orange */
 }
 
-.NB-premium-tier-features-archive li.NB-9 .NB-premium-bullet-image {
+.NB-premium-tier-features-archive li.NB-12 .NB-premium-bullet-image {
     background-image: url('/media/embed/icons/nouns/history.svg');
     filter: invert(45%) sepia(90%) saturate(1500%) hue-rotate(330deg) brightness(95%) contrast(95%);
     /* pink/magenta */
 }
 
-.NB-premium-tier-features-archive li.NB-10 .NB-premium-bullet-image {
+.NB-premium-tier-features-archive li.NB-13 .NB-premium-bullet-image {
     background-image: url('/media/img/icons/nouns/prompt.svg');
     filter: invert(30%) sepia(90%) saturate(2500%) hue-rotate(260deg) brightness(90%) contrast(100%);
     /* purple */
 }
 
-.NB-premium-tier-features-archive li.NB-11 .NB-premium-bullet-image {
+.NB-premium-tier-features-archive li.NB-14 .NB-premium-bullet-image {
     background-image: url('/media/embed/icons/icons8/icons8-calendar-100.png');
     filter: invert(55%) sepia(80%) saturate(2000%) hue-rotate(170deg) brightness(95%) contrast(95%);
     /* cyan */
 }
 
-.NB-premium-tier-features-archive li.NB-12 .NB-premium-bullet-image {
+.NB-premium-tier-features-archive li.NB-15 .NB-premium-bullet-image {
     background-image: url('/media/embed/icons/nouns/folder-open.svg');
     filter: invert(45%) sepia(70%) saturate(1200%) hue-rotate(10deg) brightness(95%) contrast(100%);
     /* brown-orange */
 }
 
-.NB-premium-tier-features-archive li.NB-13 .NB-premium-bullet-image {
+.NB-premium-tier-features-archive li.NB-16 .NB-premium-bullet-image {
     background-image: url('/media/embed/icons/nouns/world.svg');
     filter: invert(35%) sepia(95%) saturate(2500%) hue-rotate(350deg) brightness(95%) contrast(105%);
     /* red */
-}
-
-.NB-premium-tier-features-archive li.NB-14 .NB-premium-bullet-image {
-    background-image: url('/media/embed/icons/nouns/web-feed.svg');
-    filter: invert(35%) sepia(80%) saturate(2000%) hue-rotate(220deg) brightness(90%) contrast(100%);
-    /* indigo-purple */
 }
 
 /* Pro tier icons with individual vivid colors */
@@ -21518,7 +21774,7 @@ h5.NB-classifier-section-header {
     border-radius: 8px;
     border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     letter-spacing: -0.01em;
 }
 
@@ -22394,39 +22650,59 @@ h5.NB-classifier-section-header {
     font-weight: 600;
 }
 
-/* Days of Unread Upgrade notice */
-.NB-modal-preferences .NB-preference-daysofunread .NB-daysofunread-upgrade-notice {
+/* Premium Archive upgrade notice (shared style for preferences) */
+.NB-modal-preferences .NB-premium-archive-upgrade-notice {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-size: 11px;
     text-decoration: none;
-    color: #707070;
-    padding: 3px 8px;
-    border-radius: 4px;
-    transition: background-color 0.15s ease, color 0.15s ease;
-    display: inline-block;
-    margin-top: 0;
+    color: #808080;
+    padding: 4px 10px 4px 4px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    background: #fafafa;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    margin-top: 4px;
+    cursor: pointer;
 }
 
-.NB-modal-preferences .NB-preference-daysofunread .NB-daysofunread-upgrade-notice:hover {
-    background-color: rgba(74, 144, 217, 0.1);
-    color: #4a90d9;
+.NB-modal-preferences .NB-premium-archive-upgrade-notice:hover {
+    background: rgba(99, 102, 241, 0.06);
+    border-color: #c4b5fd;
+    color: #6366f1;
 }
 
-.NB-modal-preferences .NB-preference-daysofunread .NB-daysofunread-upgrade-notice .NB-archive-badge {
+.NB-modal-preferences .NB-premium-archive-upgrade-notice .NB-archive-badge {
     display: inline-block;
     background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     color: white;
     font-size: 9px;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    padding: 2px 6px;
-    border-radius: 3px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
 }
 
-.NB-modal-preferences .NB-preference-daysofunread .NB-daysofunread-upgrade-notice.NB-flash {
+.NB-modal-preferences .NB-premium-archive-upgrade-notice.NB-flash {
     animation: flash-upgrade 0.6s ease;
-    background-color: rgba(99, 102, 241, 0.15);
+    background: rgba(99, 102, 241, 0.15);
+    border-color: #8b5cf6;
     color: #6366f1;
+}
+
+.NB-dark .NB-modal-preferences .NB-premium-archive-upgrade-notice {
+    color: #888;
+    background: #2a2a2a;
+    border-color: #444;
+}
+
+.NB-dark .NB-modal-preferences .NB-premium-archive-upgrade-notice:hover {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: #6366f1;
+    color: #a78bfa;
 }
 
 .NB-modal-preferences .NB-preference-readstorydelay .NB-tangle-readstorydelay,
@@ -22856,6 +23132,36 @@ h5.NB-classifier-section-header {
     margin-top: 0;
 }
 
+.NB-modal-account .NB-renewal-notify-container {
+    clear: both;
+    margin-top: 16px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f5f5f0;
+    border-radius: 4px;
+    border: 1px solid #e0e0d8;
+}
+
+.NB-modal-account .NB-renewal-notify-container input[type=checkbox] {
+    margin: 0;
+    flex-shrink: 0;
+    float: none;
+}
+
+.NB-modal-account .NB-renewal-notify-container label {
+    margin: 0;
+    padding: 0;
+}
+
+.NB-modal-account .NB-renewal-notify-label {
+    font-size: 12px;
+    color: #606060;
+    cursor: pointer;
+    line-height: 1.3;
+}
+
 .NB-modal-account .NB-preference-saved-stories-date,
 .NB-modal-account .NB-preference-shared-stories-date {
     margin-bottom: 8px;
@@ -22941,7 +23247,7 @@ h5.NB-classifier-section-header {
     background: #fff;
     cursor: pointer;
     user-select: none;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
@@ -22984,7 +23290,7 @@ h5.NB-classifier-section-header {
     line-height: 1;
     background: rgba(0, 0, 0, 0.08);
     color: #707070;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease;
 }
 
 .NB-modal-account .NB-classifier-pill-count:empty {
@@ -23639,10 +23945,7 @@ h5.NB-classifier-section-header {
 }
 
 .NB-static-iphone .NB-ios-main .NB-ios-feature {
-    -webkit-transition: all .32s ease-out;
-    -moz-transition: all .32s ease-out;
-    -o-transition: all .32s ease-out;
-    -ms-transition: all .32s ease-out;
+    transition: border-color .32s ease-out;
     border-radius: 4px;
     border: 2px solid transparent;
 }
@@ -24628,7 +24931,7 @@ h5.NB-classifier-section-header {
     border-radius: 4px;
     cursor: pointer;
     border: 2px solid transparent;
-    transition: all 0.1s ease;
+    transition: background 0.1s ease, border-color 0.1s ease;
 }
 
 .NB-folder-icon-editor .NB-folder-icon-preset:hover,
@@ -24714,7 +25017,7 @@ h5.NB-classifier-section-header {
     border-radius: 3px;
     cursor: pointer;
     border: 2px solid transparent;
-    transition: all 0.1s ease;
+    transition: transform 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
 }
 
 .NB-folder-icon-editor .NB-folder-icon-color:hover {
@@ -24754,7 +25057,7 @@ h5.NB-classifier-section-header {
     border: 2px dashed #D0D5DA;
     border-radius: 10px;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
 }
 
@@ -24798,7 +25101,7 @@ h5.NB-classifier-section-header {
     border-radius: 10px;
     position: relative;
     flex-shrink: 0;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .NB-folder-icon-editor .NB-folder-icon-upload-icon::after {
@@ -24964,7 +25267,7 @@ h5.NB-classifier-section-header {
     border-radius: 4px;
     font-size: 12px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
 .NB-folder-icon-editor .NB-modal-submit-remove:hover {
@@ -25086,7 +25389,7 @@ h5.NB-classifier-section-header {
     border-radius: 4px;
     font-size: 12px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .NB-popover-section-folder-icon .NB-filter-popover-folder-icon-button:hover {
@@ -25963,12 +26266,8 @@ h5.NB-classifier-section-header {
     background-size: 10px;
     cursor: pointer;
     opacity: .7;
-    -webkit-transition: all .22s ease-in-out;
-    -moz-transition: all .22s ease-in-out;
-    -o-transition: all .22s ease-in-out;
-    -ms-transition: all .22s ease-in-out;
+    transition: opacity .22s ease-in-out;
 }
-
 
 .NB-search-close:hover {
     opacity: 1;
@@ -25990,7 +26289,7 @@ h5.NB-classifier-section-header {
 }
 
 .NB-story-title-search-input {
-    transition: all .22s ease-in-out;
+    transition: width .22s ease-in-out;
 
     width: 24px;
     margin: 0;
@@ -27018,6 +27317,8 @@ h5.NB-classifier-section-header {
 }
 
 .NB-filter-popover .NB-clustering-read-label {
+    display: flex;
+    align-items: center;
     font-size: 11px;
     color: #808080;
     margin-bottom: 4px;
@@ -27030,6 +27331,38 @@ h5.NB-classifier-section-header {
 .NB-filter-popover .NB-clustering-read-section.NB-disabled {
     opacity: 0.35;
     pointer-events: none;
+}
+
+/* Clustering upgrade notice in feed options popover */
+.NB-filter-popover .NB-clustering-upgrade-notice {
+    margin-left: auto;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.NB-filter-popover .NB-clustering-upgrade-notice .NB-archive-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: filter 0.3s;
+}
+
+.NB-filter-popover .NB-clustering-upgrade-notice.NB-flash .NB-archive-badge {
+    filter: brightness(1.3);
+}
+
+.NB-dark .NB-filter-popover .NB-clustering-upgrade-notice .NB-archive-badge {
+    filter: brightness(0.85);
+}
+
+.NB-dark .NB-filter-popover .NB-clustering-upgrade-notice.NB-flash .NB-archive-badge {
+    filter: brightness(1.2);
 }
 
 /* Staff Only badge */
@@ -27045,11 +27378,6 @@ h5.NB-classifier-section-header {
     border-radius: 3px;
     line-height: 1.2;
     vertical-align: middle;
-}
-
-.NB-story-cluster-sources .NB-staff-only-badge {
-    margin-right: 6px;
-    margin-bottom: 2px;
 }
 
 /* =========== */
@@ -27136,8 +27464,12 @@ h5.NB-classifier-section-header {
     text-align: left;
     background-color: #ffffff;
     background-clip: padding-box;
-    border-radius: 4px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.04),
+        0 2px 4px rgba(0, 0, 0, 0.04),
+        0 8px 16px rgba(0, 0, 0, 0.08),
+        0 16px 32px rgba(0, 0, 0, 0.06);
     white-space: normal;
 }
 
@@ -27283,9 +27615,6 @@ h5.NB-classifier-section-header {
 
 .fade {
     opacity: 0;
-    -webkit-transition: opacity 0.22s ease-in-out;
-    -moz-transition: opacity 0.22s ease-in-out;
-    -o-transition: opacity 0.22s ease-in-out;
     transition: opacity 0.22s ease-in-out;
 }
 
@@ -27294,11 +27623,6 @@ h5.NB-classifier-section-header {
 }
 
 .NB-overlay {
-    background: rgba(16, 16, 48, 0);
-    background: -webkit-linear-gradient(rgba(16, 16, 28, 0.3), rgba(16, 16, 28, 0.3) 60%, rgba(16, 16, 28, 0.01));
-    background: -moz-linear-gradient(rgba(16, 16, 28, 0.3), rgba(16, 16, 28, 0.3) 60%, rgba(16, 16, 28, 0.01));
-    background: -ms-linear-gradient(rgba(16, 16, 28, 0.3), rgba(16, 16, 28, 0.3) 60%, rgba(16, 16, 28, 0.01));
-    background: -o-linear-gradient(rgba(16, 16, 28, 0.3), rgba(16, 16, 28, 0.3) 60%, rgba(16, 16, 28, 0.01));
     background: linear-gradient(rgba(16, 16, 28, 0.3), rgba(16, 16, 28, 0.3) 60%, rgba(16, 16, 28, 0.01));
     position: fixed;
     top: 0;
@@ -27307,17 +27631,10 @@ h5.NB-classifier-section-header {
     left: 0;
     z-index: 100;
     opacity: 0.0;
-    -webkit-transition: opacity 400ms ease, -webkit-transform 0s ease;
-    -moz-transition: opacity 400ms ease, -moz-transform 0s ease;
-    -o-transition: opacity 400ms ease, -o-transform 0s ease;
     transition: opacity 400ms ease, transform 0s ease;
 }
 
 .NB-overlay.NB-top {
-    background: -webkit-linear-gradient(rgba(16, 16, 28, 0.01), rgba(16, 16, 28, 0.3) 40%, rgba(16, 16, 28, 0.3));
-    background: -moz-linear-gradient(rgba(16, 16, 28, 0.01), rgba(16, 16, 28, 0.3) 40%, rgba(16, 16, 28, 0.3));
-    background: -ms-linear-gradient(rgba(16, 16, 28, 0.01), rgba(16, 16, 28, 0.3) 40%, rgba(16, 16, 28, 0.3));
-    background: -o-linear-gradient(rgba(16, 16, 28, 0.01), rgba(16, 16, 28, 0.3) 40%, rgba(16, 16, 28, 0.3));
     background: linear-gradient(rgba(16, 16, 28, 0.01), rgba(16, 16, 28, 0.3) 40%, rgba(16, 16, 28, 0.3));
 }
 
@@ -27570,7 +27887,7 @@ h5.NB-classifier-section-header {
     border: 1px solid #d0d0d0;
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
     background: #f8f8f8;
 }
 
@@ -27704,8 +28021,30 @@ h5.NB-classifier-section-header {
     color: #555;
 }
 
-.NB-clustering-mark-read-option label {
+.NB-modal-preferences .NB-preference .NB-preference-options .NB-clustering-mark-read-option label {
     cursor: pointer;
+    margin: 0;
+}
+
+.NB-clustering-mark-read-option.NB-disabled label {
+    cursor: default;
+    opacity: 0.4;
+}
+
+.NB-clustering-mark-read-option.NB-disabled input[type=checkbox] {
+    opacity: 0.4;
+}
+
+.NB-clustering-mark-read-option .NB-premium-archive-upgrade-notice {
+    margin-left: auto;
+    margin-top: 0;
+    padding: 2px 8px 2px 3px;
+    font-size: 10px;
+}
+
+.NB-clustering-mark-read-option .NB-premium-archive-upgrade-notice .NB-archive-badge {
+    font-size: 8px;
+    padding: 2px 6px;
 }
 
 .NB-dark .NB-clustering-mark-read-option {
@@ -28347,7 +28686,7 @@ h5.NB-classifier-section-header {
     margin-bottom: 16px;
 }
 
-.NB-add-site-tab-search-bar > .NB-add-site-tab-search-btn {
+.NB-add-site-tab-search-bar>.NB-add-site-tab-search-btn {
     flex-shrink: 0;
 }
 
@@ -28379,7 +28718,7 @@ h5.NB-classifier-section-header {
     border: 2px solid #D0D4D8;
     border-radius: 12px;
     padding: 0 16px;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .NB-add-site-search-wrapper:focus-within {
@@ -28418,7 +28757,7 @@ h5.NB-classifier-section-header {
     color: #999;
     font-size: 18px;
     border-radius: 50%;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .NB-add-site-search-clear:hover {
@@ -28470,7 +28809,7 @@ h5.NB-classifier-section-header {
     height: 36px;
     border-radius: 6px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
     user-select: none;
 }
 
@@ -28531,7 +28870,7 @@ h5.NB-classifier-section-header {
     background: #E8E8E8;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease;
     user-select: none;
 }
 
@@ -28594,7 +28933,7 @@ h5.NB-classifier-section-header {
     padding: 8px 0;
 }
 
-.NB-add-site-style-popover > .NB-style-popover-content > .NB-style-row {
+.NB-add-site-style-popover>.NB-style-popover-content>.NB-style-row {
     padding-bottom: 4px;
 }
 
@@ -28627,7 +28966,7 @@ h5.NB-classifier-section-header {
     color: rgba(0, 0, 0, 0.6);
     cursor: pointer;
     border-radius: 4px;
-    transition: all 0.15s ease;
+    transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
     white-space: nowrap;
     min-width: 0;
     overflow: hidden;
@@ -28750,7 +29089,7 @@ h5.NB-classifier-section-header {
     font-size: 13px;
     font-weight: 500;
     color: #666;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     white-space: nowrap;
 }
 
@@ -28814,7 +29153,7 @@ h5.NB-classifier-section-header {
     font-size: 13px;
     font-weight: 500;
     color: #666;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     white-space: nowrap;
     flex-shrink: 0;
     user-select: none;
@@ -28966,7 +29305,7 @@ h5.NB-classifier-section-header {
     border: 1px solid #E0E0E0;
     border-radius: 12px;
     padding: 16px;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
     display: flex;
     flex-direction: column;
     min-width: 0;
@@ -29050,6 +29389,7 @@ h5.NB-classifier-section-header {
 .NB-freshness-active .NB-freshness-dot {
     background: #4CAF50;
 }
+
 .NB-freshness-active .NB-freshness-label {
     color: #4CAF50;
 }
@@ -29057,6 +29397,7 @@ h5.NB-classifier-section-header {
 .NB-freshness-stale .NB-freshness-dot {
     background: #F9A825;
 }
+
 .NB-freshness-stale .NB-freshness-label {
     color: #B8860B;
 }
@@ -29064,6 +29405,7 @@ h5.NB-classifier-section-header {
 .NB-freshness-none .NB-freshness-dot {
     background: #90A4AE;
 }
+
 .NB-freshness-none .NB-freshness-label {
     color: #90A4AE;
 }
@@ -29360,9 +29702,17 @@ h5.NB-classifier-section-header {
 
 /* Skeleton Loading Cards */
 @keyframes nb-skeleton-pulse {
-    0% { background-color: #E1EBFF; }
-    38% { background-color: #C8D8F0; }
-    100% { background-color: #E1EBFF; }
+    0% {
+        background-color: #E1EBFF;
+    }
+
+    38% {
+        background-color: #C8D8F0;
+    }
+
+    100% {
+        background-color: #E1EBFF;
+    }
 }
 
 .NB-add-site-skeleton-card {
@@ -29636,7 +29986,7 @@ h5.NB-classifier-section-header {
     border-radius: 12px;
     font-size: 15px;
     outline: none;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
     background: #FFF;
     color: #333;
 }
@@ -29672,7 +30022,7 @@ h5.NB-classifier-section-header {
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease;
 }
 
 .NB-add-site-tab-search-btn:hover {
@@ -29688,12 +30038,14 @@ h5.NB-classifier-section-header {
     cursor: pointer;
     background: #FFF;
 }
+
 .NB-add-site-trending-pills {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
     padding: 0 0 12px;
 }
+
 .NB-add-site-trending-pill {
     padding: 5px 10px;
     background: #FFF;
@@ -29704,21 +30056,25 @@ h5.NB-classifier-section-header {
     font-weight: 500;
     color: #666;
     white-space: nowrap;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
+
 .NB-add-site-trending-pill:hover {
     border-color: #5C89C9;
     background: #F0F5FF;
     color: #5C89C9;
 }
+
 .NB-add-site-trending-pill.NB-active {
     background: #5C89C9;
     color: #FFF;
     border-color: #5C89C9;
 }
+
 .NB-add-site-trending-pill.NB-active:hover {
     background: #4A78B5;
 }
+
 .NB-add-site-trending-description {
     font-size: 12px;
     color: #999;
@@ -29743,7 +30099,7 @@ h5.NB-classifier-section-header {
     border: 1px solid #E0E0E0;
     border-radius: 12px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .NB-add-site-category-card:hover {
@@ -29797,7 +30153,7 @@ h5.NB-classifier-section-header {
     cursor: pointer;
     font-size: 13px;
     color: #666;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .NB-add-site-category-back:hover {
@@ -29858,20 +30214,24 @@ h5.NB-classifier-section-header {
     padding: 14px 16px;
     margin-bottom: 16px;
 }
+
 .NB-add-site-google-news-input-row {
     display: flex;
     align-items: flex-end;
     gap: 10px;
 }
+
 .NB-add-site-google-news-field {
     display: flex;
     flex-direction: column;
     gap: 5px;
 }
+
 .NB-add-site-google-news-field-search {
     flex: 1;
     min-width: 0;
 }
+
 .NB-add-site-google-news-label {
     font-size: 11px;
     font-weight: 600;
@@ -29959,7 +30319,7 @@ h5.NB-classifier-section-header {
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease;
     white-space: nowrap;
     align-self: flex-end;
 }
@@ -29978,7 +30338,7 @@ h5.NB-classifier-section-header {
     display: inline-block;
     width: 12px;
     height: 12px;
-    border: 2px solid rgba(255,255,255,0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-top-color: #FFF;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
@@ -30004,10 +30364,12 @@ h5.NB-classifier-section-header {
     align-items: center;
     gap: 4px;
 }
+
 .NB-add-site-google-news-folder-row .NB-add-site-folder-select {
     min-width: 130px;
     max-width: 200px;
 }
+
 .NB-add-site-google-news-folder-add-icon {
     width: 36px;
     height: 36px;
@@ -30022,23 +30384,27 @@ h5.NB-classifier-section-header {
     font-weight: 600;
     cursor: pointer;
     flex-shrink: 0;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
     line-height: 1;
     box-sizing: border-box;
 }
+
 .NB-add-site-google-news-folder-add-icon:hover {
     border-color: #999;
     color: #555;
     background: #F5F5F5;
 }
+
 .NB-add-site-google-news-folder-add-icon.NB-active {
     border-color: #5C89C9;
     color: #5C89C9;
     background: #EEF3FA;
 }
+
 .NB-add-site-google-news-folder-input {
     margin-top: 10px;
 }
+
 .NB-add-site-google-news-folder-input-row {
     display: flex;
     align-items: stretch;
@@ -30047,10 +30413,12 @@ h5.NB-classifier-section-header {
     border-radius: 8px;
     overflow: hidden;
 }
+
 .NB-add-site-google-news-folder-input-row:focus-within {
     border-color: #5C89C9;
     box-shadow: 0 0 0 3px rgba(92, 137, 201, 0.15);
 }
+
 .NB-add-site-google-news-folder-name {
     flex: 1;
     min-width: 0;
@@ -30060,9 +30428,11 @@ h5.NB-classifier-section-header {
     font-size: 14px;
     background: #FFF;
 }
+
 .NB-add-site-google-news-folder-name::placeholder {
     color: #A0A0A0;
 }
+
 .NB-add-site-google-news-folder-submit {
     flex-shrink: 0;
     padding: 0 20px;
@@ -30076,13 +30446,16 @@ h5.NB-classifier-section-header {
     border: none;
     white-space: nowrap;
 }
+
 .NB-add-site-google-news-folder-submit:hover {
     background: #5C8F5C;
 }
+
 .NB-add-site-google-news-folder-submit.NB-disabled {
     opacity: 0.6;
     cursor: default;
 }
+
 .NB-add-site-google-news-folder-input-row .NB-loading {
     width: 0;
     height: 16px;
@@ -30091,6 +30464,7 @@ h5.NB-classifier-section-header {
     overflow: hidden;
     transition: width 0.2s, margin 0.2s;
 }
+
 .NB-add-site-google-news-folder-input-row .NB-loading.NB-active {
     width: 16px;
     margin-right: 8px;
@@ -30102,6 +30476,7 @@ h5.NB-classifier-section-header {
     flex: 1;
     overflow-y: auto;
 }
+
 .NB-add-site-webfeed-empty {
     display: flex;
     flex-direction: column;
@@ -30111,6 +30486,7 @@ h5.NB-classifier-section-header {
     gap: 24px;
     min-height: 300px;
 }
+
 .NB-add-site-webfeed-explainer {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -30118,6 +30494,7 @@ h5.NB-classifier-section-header {
     max-width: 860px;
     width: 100%;
 }
+
 .NB-add-site-webfeed-explainer-card {
     display: flex;
     flex-direction: column;
@@ -30131,10 +30508,12 @@ h5.NB-classifier-section-header {
     transform: translateY(12px);
     transition: opacity 0.5s ease, transform 0.5s ease;
 }
+
 .NB-add-site-webfeed-explainer-card.NB-animate-in {
     opacity: 1;
     transform: translateY(0);
 }
+
 .NB-add-site-webfeed-explainer-illustration {
     width: 96px;
     height: 96px;
@@ -30143,17 +30522,20 @@ h5.NB-classifier-section-header {
     justify-content: center;
     margin-bottom: 16px;
 }
+
 .NB-add-site-webfeed-explainer-img {
     width: 96px;
     height: 96px;
     opacity: 0.55;
 }
+
 .NB-add-site-webfeed-explainer-title {
     font-size: 15px;
     font-weight: 600;
     color: #333;
     margin-bottom: 8px;
 }
+
 .NB-add-site-webfeed-explainer-desc {
     font-size: 13px;
     color: #666;
@@ -30161,12 +30543,14 @@ h5.NB-classifier-section-header {
     max-width: 220px;
     margin-bottom: 8px;
 }
+
 .NB-add-site-webfeed-explainer-detail {
     font-size: 11px;
     color: #999;
     line-height: 1.4;
     max-width: 220px;
 }
+
 .NB-add-site-webfeed-empty-cta {
     font-size: 14px;
     color: #999;
@@ -30174,10 +30558,12 @@ h5.NB-classifier-section-header {
     transform: translateY(12px);
     transition: opacity 0.5s ease, transform 0.5s ease;
 }
+
 .NB-add-site-webfeed-empty-cta.NB-animate-in {
     opacity: 1;
     transform: translateY(0);
 }
+
 .NB-add-site-webfeed-analyzing {
     display: flex;
     flex-direction: column;
@@ -30186,6 +30572,7 @@ h5.NB-classifier-section-header {
     padding: 48px 16px;
     gap: 16px;
 }
+
 .NB-add-site-webfeed-analyzing-spinner {
     width: 32px;
     height: 32px;
@@ -30194,10 +30581,12 @@ h5.NB-classifier-section-header {
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
+
 .NB-add-site-webfeed-analyzing-text {
     font-size: 14px;
     color: #666;
 }
+
 .NB-add-site-webfeed-error {
     display: flex;
     align-items: center;
@@ -30209,22 +30598,27 @@ h5.NB-classifier-section-header {
     border-radius: 8px;
     color: #721C24;
 }
+
 .NB-add-site-webfeed-error-icon {
     font-size: 20px;
 }
+
 .NB-add-site-webfeed-error-text {
     font-size: 13px;
     line-height: 1.4;
 }
+
 /* Webfeed section headers */
 .NB-add-site-webfeed-section-header {
     margin-bottom: 8px;
 }
+
 .NB-add-site-webfeed-section-title {
     font-size: 15px;
     font-weight: 600;
     color: #333;
 }
+
 .NB-add-site-webfeed-section-subtitle {
     font-size: 12px;
     color: #888;
@@ -30236,11 +30630,13 @@ h5.NB-classifier-section-header {
 .NB-add-site-webfeed-variants-section {
     margin-bottom: 20px;
 }
+
 .NB-add-site-webfeed-variant-cards {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
+
 .NB-add-site-webfeed-variant-card {
     padding: 12px 14px;
     border: 2px solid #E0E0E0;
@@ -30251,19 +30647,23 @@ h5.NB-classifier-section-header {
     opacity: 0;
     transform: translateY(12px);
 }
+
 .NB-add-site-webfeed-variant-card.NB-animate-in {
     opacity: 1;
     transform: translateY(0);
 }
+
 .NB-add-site-webfeed-variant-card:hover {
     border-color: #B0C4DE;
     box-shadow: 0 1px 6px rgba(74, 144, 217, 0.1);
 }
+
 .NB-add-site-webfeed-variant-card.NB-active {
     border-color: #4A90D9;
     box-shadow: 0 2px 12px rgba(74, 144, 217, 0.15);
     background: #F0F6FC;
 }
+
 /* -- Hint card (first card, not selectable) -- */
 .NB-add-site-webfeed-hint-card {
     border-style: dashed;
@@ -30271,31 +30671,37 @@ h5.NB-classifier-section-header {
     background: #FBF7F3;
     cursor: default;
 }
+
 .NB-add-site-webfeed-hint-card:hover {
     border-color: #B0A090;
     box-shadow: none;
 }
+
 .NB-add-site-webfeed-hint-header {
     display: flex;
     align-items: flex-start;
     gap: 10px;
     margin-bottom: 10px;
 }
+
 .NB-add-site-webfeed-hint-title {
     font-weight: 600;
     font-size: 13px;
     color: #555;
 }
+
 .NB-add-site-webfeed-hint-desc {
     font-size: 12px;
     color: #888;
     margin-top: 2px;
 }
+
 .NB-add-site-webfeed-hint-form {
     display: flex;
     gap: 8px;
     align-items: center;
 }
+
 .NB-add-site-webfeed-hint-input {
     flex: 1;
     padding: 6px 10px;
@@ -30305,10 +30711,12 @@ h5.NB-classifier-section-header {
     font-family: inherit;
     outline: none;
 }
+
 .NB-add-site-webfeed-hint-input:focus {
     border-color: #B0A090;
     box-shadow: 0 0 0 2px rgba(200, 184, 168, 0.25);
 }
+
 .NB-add-site-webfeed-hint-btn {
     display: flex;
     align-items: center;
@@ -30323,28 +30731,34 @@ h5.NB-classifier-section-header {
     white-space: nowrap;
     transition: background 0.15s;
 }
+
 .NB-add-site-webfeed-hint-btn:hover {
     background: #6B5B45;
 }
+
 .NB-add-site-webfeed-hint-btn.NB-disabled {
     opacity: 0.7;
     cursor: default;
 }
+
 .NB-add-site-webfeed-hint-spinner {
     width: 14px;
     height: 14px;
 }
+
 /* Dim variant cards during refinement */
 .NB-add-site-webfeed-variant-cards.NB-refining .NB-add-site-webfeed-variant-card:not(.NB-add-site-webfeed-hint-card) {
     opacity: 0.4;
     pointer-events: none;
 }
+
 .NB-add-site-webfeed-variant-card-header {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-bottom: 8px;
 }
+
 .NB-add-site-webfeed-variant-radio {
     width: 18px;
     height: 18px;
@@ -30354,13 +30768,16 @@ h5.NB-classifier-section-header {
     transition: border-color 0.15s, background 0.15s;
     position: relative;
 }
+
 .NB-add-site-webfeed-variant-card:hover .NB-add-site-webfeed-variant-radio {
     border-color: #AAA;
 }
+
 .NB-add-site-webfeed-variant-radio.NB-selected {
     border-color: #4A90D9;
     background: #4A90D9;
 }
+
 .NB-add-site-webfeed-variant-radio.NB-selected::after {
     content: '';
     position: absolute;
@@ -30371,22 +30788,26 @@ h5.NB-classifier-section-header {
     border-radius: 50%;
     background: #FFF;
 }
+
 .NB-add-site-webfeed-variant-card-info {
     flex: 1;
     min-width: 0;
 }
+
 .NB-add-site-webfeed-variant-label {
     font-size: 13px;
     font-weight: 600;
     color: #333;
     line-height: 1.3;
 }
+
 .NB-add-site-webfeed-variant-desc {
     font-size: 11px;
     color: #888;
     margin-top: 2px;
     line-height: 1.3;
 }
+
 .NB-add-site-webfeed-variant-count {
     font-size: 11px;
     color: #4A90D9;
@@ -30394,36 +30815,42 @@ h5.NB-classifier-section-header {
     flex-shrink: 0;
     margin-top: 2px;
 }
+
 .NB-add-site-webfeed-preview-stories {
     display: flex;
     flex-direction: column;
     gap: 4px;
     margin-left: 28px;
 }
+
 .NB-add-site-webfeed-preview-story {
     padding: 6px 8px;
     background: #FFF;
     border-radius: 4px;
     border: 1px solid #EEE;
 }
+
 .NB-add-site-webfeed-preview-story-title {
     font-size: 12px;
     font-weight: 500;
     color: #333;
     line-height: 1.3;
 }
+
 .NB-add-site-webfeed-preview-story-content {
     font-size: 11px;
     color: #888;
     margin-top: 2px;
     line-height: 1.3;
 }
+
 .NB-add-site-webfeed-preview-story.NB-has-image {
     display: flex;
     flex-direction: row;
     gap: 8px;
     align-items: flex-start;
 }
+
 .NB-add-site-webfeed-preview-story-image {
     width: 40px;
     height: 40px;
@@ -30432,6 +30859,7 @@ h5.NB-classifier-section-header {
     flex-shrink: 0;
     background: #F0F0F0;
 }
+
 .NB-add-site-webfeed-preview-story-text {
     flex: 1;
     min-width: 0;
@@ -30445,10 +30873,12 @@ h5.NB-classifier-section-header {
     transform: translateY(12px);
     transition: opacity 0.5s ease, transform 0.5s ease;
 }
+
 .NB-add-site-webfeed-subscribe-section.NB-animate-in {
     opacity: 1;
     transform: translateY(0);
 }
+
 .NB-add-site-webfeed-feed-badge {
     display: flex;
     align-items: center;
@@ -30459,6 +30889,7 @@ h5.NB-classifier-section-header {
     border-radius: 8px;
     margin-bottom: 12px;
 }
+
 .NB-add-site-webfeed-feed-badge-icon {
     width: 36px;
     height: 36px;
@@ -30467,21 +30898,25 @@ h5.NB-classifier-section-header {
     align-items: center;
     justify-content: center;
 }
+
 .NB-add-site-webfeed-feed-badge-favicon {
     width: 36px;
     height: 36px;
     border-radius: 6px;
     object-fit: contain;
 }
+
 .NB-add-site-webfeed-feed-badge-favicon.NB-default-icon {
     padding: 4px;
     background: #E8EDF2;
     border-radius: 6px;
 }
+
 .NB-add-site-webfeed-feed-badge-info {
     flex: 1;
     min-width: 0;
 }
+
 .NB-add-site-webfeed-feed-badge-title {
     font-size: 14px;
     font-weight: 600;
@@ -30491,6 +30926,7 @@ h5.NB-classifier-section-header {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
 .NB-add-site-webfeed-feed-badge-url {
     font-size: 11px;
     color: #999;
@@ -30498,11 +30934,13 @@ h5.NB-classifier-section-header {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
 .NB-add-site-webfeed-feed-badge-pattern {
     font-size: 11px;
     color: #4A90D9;
     margin-top: 2px;
 }
+
 .NB-add-site-webfeed-options {
     padding: 14px;
     border: 1px solid #E0E0E0;
@@ -30513,11 +30951,13 @@ h5.NB-classifier-section-header {
     gap: 14px;
     margin-bottom: 12px;
 }
+
 .NB-add-site-webfeed-option {
     display: flex;
     flex-direction: column;
     gap: 6px;
 }
+
 .NB-add-site-webfeed-option-label {
     font-size: 12px;
     font-weight: 600;
@@ -30525,15 +30965,18 @@ h5.NB-classifier-section-header {
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }
+
 .NB-add-site-webfeed-folder-row {
     display: flex;
     align-items: center;
     gap: 6px;
 }
+
 .NB-add-site-webfeed-folder-row .NB-add-site-folder-select {
     flex: 1;
     min-width: 0;
 }
+
 .NB-add-site-webfeed-folder-add-icon {
     width: 28px;
     height: 28px;
@@ -30548,19 +30991,22 @@ h5.NB-classifier-section-header {
     font-weight: 600;
     cursor: pointer;
     flex-shrink: 0;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
     line-height: 1;
 }
+
 .NB-add-site-webfeed-folder-add-icon:hover {
     border-color: #999;
     color: #555;
     background: #F5F5F5;
 }
+
 .NB-add-site-webfeed-folder-add-icon.NB-active {
     border-color: #5C89C9;
     color: #5C89C9;
     background: #EEF3FA;
 }
+
 .NB-add-site-webfeed-folder-input-row {
     display: flex;
     align-items: stretch;
@@ -30570,10 +31016,12 @@ h5.NB-classifier-section-header {
     border-radius: 6px;
     overflow: hidden;
 }
+
 .NB-add-site-webfeed-folder-input-row:focus-within {
     border-color: #5C89C9;
     box-shadow: 0 0 0 2px rgba(92, 137, 201, 0.15);
 }
+
 .NB-add-site-webfeed-folder-name {
     flex: 1;
     min-width: 0;
@@ -30583,9 +31031,11 @@ h5.NB-classifier-section-header {
     font-size: 13px;
     background: #FFF;
 }
+
 .NB-add-site-webfeed-folder-name::placeholder {
     color: #A0A0A0;
 }
+
 .NB-add-site-webfeed-folder-submit {
     flex-shrink: 0;
     padding: 0 16px;
@@ -30598,13 +31048,16 @@ h5.NB-classifier-section-header {
     align-items: center;
     border: none;
 }
+
 .NB-add-site-webfeed-folder-submit:hover {
     background: #5C8F5C;
 }
+
 .NB-add-site-webfeed-folder-submit.NB-disabled {
     opacity: 0.6;
     cursor: default;
 }
+
 .NB-add-site-webfeed-folder-input-row .NB-loading {
     width: 0;
     height: 16px;
@@ -30613,14 +31066,17 @@ h5.NB-classifier-section-header {
     overflow: hidden;
     transition: width 0.2s, margin 0.2s;
 }
+
 .NB-add-site-webfeed-folder-input-row .NB-loading.NB-active {
     width: 16px;
     margin-right: 8px;
 }
+
 .NB-add-site-webfeed-staleness-slider {
     width: 100%;
     max-width: 300px;
 }
+
 .NB-add-site-webfeed-radio-group {
     display: flex;
     gap: 0;
@@ -30629,6 +31085,7 @@ h5.NB-classifier-section-header {
     overflow: hidden;
     max-width: 320px;
 }
+
 .NB-add-site-webfeed-radio-option {
     flex: 1;
     display: flex;
@@ -30643,28 +31100,35 @@ h5.NB-classifier-section-header {
     transition: background 0.15s, color 0.15s;
     border-right: 1px solid #DDD;
 }
+
 .NB-add-site-webfeed-radio-option:last-child {
     border-right: none;
 }
+
 .NB-add-site-webfeed-radio-option:hover {
     background: #F5F5F5;
 }
+
 .NB-add-site-webfeed-radio-option.NB-selected {
     background: #EBF2FB;
     color: #2A6BB5;
     font-weight: 600;
 }
+
 .NB-add-site-webfeed-radio-option input[type="radio"] {
     display: none;
 }
+
 .NB-add-site-webfeed-subscribe-btn {
     align-self: flex-start;
     margin-bottom: 32px;
 }
+
 .NB-add-site-webfeed-subscribe-btn.NB-disabled {
     opacity: 0.6;
     pointer-events: none;
 }
+
 .NB-add-site-webfeed-subscribed {
     display: flex;
     align-items: center;
@@ -30675,30 +31139,36 @@ h5.NB-classifier-section-header {
     border: 1px solid #C3E6CB;
     border-radius: 8px;
 }
+
 .NB-add-site-webfeed-subscribed-icon {
     font-size: 32px;
     color: #28A745;
 }
+
 .NB-add-site-webfeed-subscribed-title {
     font-size: 16px;
     font-weight: 600;
     color: #155724;
 }
+
 .NB-add-site-webfeed-subscribed-desc {
     font-size: 13px;
     color: #155724;
     margin-top: 4px;
 }
+
 .NB-add-site-webfeed-subscribe-progress {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-top: 8px;
 }
+
 .NB-add-site-webfeed-subscribe-status {
     font-size: 12px;
     color: #6c757d;
 }
+
 .NB-add-site-webfeed-subscribe-status.NB-error {
     color: #dc3545;
     margin-top: 8px;
@@ -30714,15 +31184,18 @@ h5.NB-classifier-section-header {
     cursor: pointer;
     transition: background 0.15s ease, border-color 0.15s ease;
 }
+
 .NB-add-site-webfeed-archive-banner:hover {
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
     border-color: rgba(99, 102, 241, 0.25);
 }
+
 .NB-add-site-webfeed-archive-banner-content {
     display: flex;
     gap: 12px;
     align-items: flex-start;
 }
+
 .NB-add-site-webfeed-archive-banner-icon {
     width: 32px;
     height: 32px;
@@ -30734,10 +31207,12 @@ h5.NB-classifier-section-header {
     -webkit-mask-size: 20px;
     mask-size: 20px;
 }
+
 .NB-add-site-webfeed-archive-banner-text {
     flex: 1;
     min-width: 0;
 }
+
 .NB-add-site-webfeed-archive-banner-title {
     font-size: 13px;
     font-weight: 600;
@@ -30747,6 +31222,7 @@ h5.NB-classifier-section-header {
     align-items: center;
     gap: 8px;
 }
+
 .NB-add-site-webfeed-archive-banner-title .NB-archive-badge {
     display: inline-block;
     background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
@@ -30759,11 +31235,13 @@ h5.NB-classifier-section-header {
     border-radius: 3px;
     flex-shrink: 0;
 }
+
 .NB-add-site-webfeed-archive-banner-body {
     font-size: 12px;
     line-height: 1.5;
     color: #707070;
 }
+
 .NB-add-site-webfeed-archive-banner-cta {
     margin-top: 10px;
     padding: 8px 16px;
@@ -30776,16 +31254,20 @@ h5.NB-classifier-section-header {
     cursor: pointer;
     transition: opacity 0.15s ease, transform 0.15s ease;
 }
+
 .NB-add-site-webfeed-archive-banner-cta:hover {
     opacity: 0.9;
     transform: translateY(-1px);
 }
+
 .NB-add-site-webfeed-archive-banner-cta:active {
     transform: translateY(0);
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Disabled button state with spinner */
@@ -30805,7 +31287,7 @@ h5.NB-classifier-section-header {
     display: inline-block;
     width: 12px;
     height: 12px;
-    border: 2px solid rgba(255,255,255,0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-top-color: #FFF;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
@@ -30973,7 +31455,7 @@ h5.NB-classifier-section-header {
     border: 1px solid #E0E0E0;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
     font-size: 14px;
     font-weight: 500;
     color: #333;
@@ -31029,7 +31511,7 @@ h5.NB-classifier-section-header {
     border: 1px solid #E0E0E0;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
     font-size: 14px;
     font-weight: 500;
     color: #333;
@@ -31084,7 +31566,7 @@ h5.NB-classifier-section-header {
     font-size: 12px;
     font-weight: 500;
     color: #666;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
 .NB-add-site-cat-pill:hover {
@@ -31128,7 +31610,7 @@ h5.NB-classifier-section-header {
 }
 
 .NB-add-site-cat-pill.NB-active .NB-add-site-cat-pill-counts {
-    color: rgba(255,255,255,0.7);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 /* Subcategory pills row (hidden by default, shown via JS) */
@@ -31180,7 +31662,7 @@ h5.NB-classifier-section-header {
     font-size: 11px;
     font-weight: 500;
     color: #555;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
 .NB-add-site-subcat-pill:hover {
@@ -31206,7 +31688,7 @@ h5.NB-classifier-section-header {
 }
 
 .NB-add-site-subcat-pill.NB-active .NB-add-site-subcat-pill-count {
-    color: rgba(255,255,255,0.7);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 /* Dark mode: two-level pills */
@@ -31248,7 +31730,7 @@ h5.NB-classifier-section-header {
 }
 
 .NB-dark .NB-add-site-cat-pill.NB-active .NB-add-site-cat-pill-counts {
-    color: rgba(255,255,255,0.7);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .NB-dark .NB-add-site-subcat-pills-row {
@@ -31287,7 +31769,7 @@ h5.NB-classifier-section-header {
 }
 
 .NB-dark .NB-add-site-subcat-pill.NB-active .NB-add-site-subcat-pill-count {
-    color: rgba(255,255,255,0.7);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .NB-add-site-filter-pill {
@@ -31299,7 +31781,7 @@ h5.NB-classifier-section-header {
     border: 1px solid #E0E0E0;
     border-radius: 20px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
     font-size: 13px;
     font-weight: 500;
     color: #666;
@@ -31352,7 +31834,7 @@ h5.NB-classifier-section-header {
 }
 
 .NB-add-site-filter-pill.NB-active .NB-add-site-filter-pill-count {
-    color: rgba(255,255,255,0.7);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 /* Tips Grid */
@@ -31520,9 +32002,17 @@ h5.NB-classifier-section-header {
 }
 
 @keyframes nb-skeleton-pulse-dark {
-    0% { background-color: #2E3A4E; }
-    38% { background-color: #3D5070; }
-    100% { background-color: #2E3A4E; }
+    0% {
+        background-color: #2E3A4E;
+    }
+
+    38% {
+        background-color: #3D5070;
+    }
+
+    100% {
+        background-color: #2E3A4E;
+    }
 }
 
 .NB-dark .NB-add-site-skeleton-icon,
@@ -31571,7 +32061,7 @@ h5.NB-classifier-section-header {
 }
 
 .NB-dark .NB-add-site-filter-pill.NB-active .NB-add-site-filter-pill-count {
-    color: rgba(255,255,255,0.7);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .NB-dark .NB-add-site-category-card {
@@ -31600,6 +32090,7 @@ h5.NB-classifier-section-header {
     background: #1E1E1E;
     border-color: #3A3A3A;
 }
+
 .NB-dark .NB-add-site-google-news-label {
     color: #777;
 }
@@ -31629,36 +32120,44 @@ h5.NB-classifier-section-header {
     border-color: #444 !important;
     color: #CCC !important;
 }
+
 .NB-dark .NB-add-site-google-news-language {
     background-color: #2A2A2A;
     border-color: #444;
     color: #CCC;
 }
+
 .NB-dark .NB-add-site-google-news-folder-add-icon {
     border-color: #444;
     background: #2A2A2A;
     color: #999;
 }
+
 .NB-dark .NB-add-site-google-news-folder-add-icon:hover {
     border-color: #666;
     color: #CCC;
     background: #333;
 }
+
 .NB-dark .NB-add-site-google-news-folder-add-icon.NB-active {
     border-color: #5C89C9;
     color: #6AADEA;
     background: #1A2A3A;
 }
+
 .NB-dark .NB-add-site-google-news-folder-input-row {
     border-color: #444;
 }
+
 .NB-dark .NB-add-site-google-news-folder-input-row:focus-within {
     border-color: #5C89C9;
 }
+
 .NB-dark .NB-add-site-google-news-folder-name {
     background: #2A2A2A;
     color: #DDD;
 }
+
 .NB-dark .NB-add-site-google-news-folder-name::placeholder {
     color: #777;
 }
@@ -31835,182 +32334,233 @@ h5.NB-classifier-section-header {
     background: #2A2A2A;
     border-color: #444;
 }
+
 .NB-dark .NB-add-site-webfeed-explainer-img {
     filter: brightness(0) invert(0.7);
     opacity: 0.5;
 }
+
 .NB-dark .NB-add-site-webfeed-explainer-title {
     color: #E0E0E0;
 }
+
 .NB-dark .NB-add-site-webfeed-explainer-desc {
     color: #999;
 }
+
 .NB-dark .NB-add-site-webfeed-explainer-detail {
     color: #777;
 }
+
 .NB-dark .NB-add-site-webfeed-empty-cta {
     color: #777;
 }
+
 .NB-dark .NB-add-site-webfeed-analyzing-spinner {
     border-color: #444;
     border-top-color: #6AADEA;
 }
+
 .NB-dark .NB-add-site-webfeed-analyzing-text {
     color: #AAA;
 }
+
 .NB-dark .NB-add-site-webfeed-error {
     background: #3A1A1A;
     border-color: #5A2020;
     color: #F5A0A0;
 }
+
 .NB-dark .NB-add-site-webfeed-section-title {
     color: #E0E0E0;
 }
+
 .NB-dark .NB-add-site-webfeed-section-subtitle {
     color: #777;
 }
+
 .NB-dark .NB-add-site-webfeed-hint-card {
     border-color: #5A4A3A;
     background: #2A2520;
 }
+
 .NB-dark .NB-add-site-webfeed-hint-card:hover {
     border-color: #6A5A4A;
 }
+
 .NB-dark .NB-add-site-webfeed-hint-title {
     color: #C0B0A0;
 }
+
 .NB-dark .NB-add-site-webfeed-hint-desc {
     color: #888;
 }
+
 .NB-dark .NB-add-site-webfeed-hint-input {
     background: #1A1A1A;
     border-color: #555;
     color: #DDD;
 }
+
 .NB-dark .NB-add-site-webfeed-hint-input:focus {
     border-color: #6A5A4A;
     box-shadow: 0 0 0 2px rgba(90, 74, 58, 0.3);
 }
+
 .NB-dark .NB-add-site-webfeed-hint-btn {
     background: #6A5A4A;
 }
+
 .NB-dark .NB-add-site-webfeed-hint-btn:hover {
     background: #7A6A5A;
 }
+
 .NB-dark .NB-add-site-webfeed-variant-card {
     border-color: #444;
     background: #2A2A2A;
 }
+
 .NB-dark .NB-add-site-webfeed-variant-card:hover {
     border-color: #5A7A9A;
 }
+
 .NB-dark .NB-add-site-webfeed-variant-card.NB-active {
     border-color: #6AADEA;
     background: #1A2A3A;
 }
+
 .NB-dark .NB-add-site-webfeed-variant-radio {
     border-color: #555;
 }
+
 .NB-dark .NB-add-site-webfeed-variant-radio.NB-selected {
     border-color: #6AADEA;
     background: #6AADEA;
 }
+
 .NB-dark .NB-add-site-webfeed-variant-label {
     color: #E0E0E0;
 }
+
 .NB-dark .NB-add-site-webfeed-variant-desc {
     color: #999;
 }
+
 .NB-dark .NB-add-site-webfeed-variant-count {
     color: #6AADEA;
 }
+
 .NB-dark .NB-add-site-webfeed-preview-story {
     background: #333;
     border-color: #444;
 }
+
 .NB-dark .NB-add-site-webfeed-preview-story-title {
     color: #DDD;
 }
+
 .NB-dark .NB-add-site-webfeed-preview-story-content {
     color: #999;
 }
+
 .NB-dark .NB-add-site-webfeed-preview-story-image {
     background: #3A3A3A;
 }
+
 .NB-dark .NB-add-site-webfeed-subscribe-section {
     border-top-color: #444;
 }
+
 .NB-dark .NB-add-site-webfeed-feed-badge {
     background: #1E2A38;
     border-color: #2A3A4A;
 }
+
 .NB-dark .NB-add-site-webfeed-feed-badge-favicon.NB-default-icon {
     background: #2A3A4A;
 }
+
 .NB-dark .NB-add-site-webfeed-feed-badge-title {
     color: #E0E0E0;
 }
+
 .NB-dark .NB-add-site-webfeed-feed-badge-url {
     color: #777;
 }
+
 .NB-dark .NB-add-site-webfeed-feed-badge-pattern {
     color: #6AADEA;
 }
+
 .NB-dark .NB-add-site-webfeed-options {
     border-color: #444;
     background: #2A2A2A;
 }
+
 .NB-dark .NB-add-site-webfeed-option-label {
     color: #BBB;
 }
+
 .NB-dark .NB-add-site-webfeed-radio-group {
     border-color: #444;
 }
+
 .NB-dark .NB-add-site-webfeed-radio-option {
     background: #333;
     color: #AAA;
     border-right-color: #444;
 }
+
 .NB-dark .NB-add-site-webfeed-radio-option:hover {
     background: #3A3A3A;
 }
+
 .NB-dark .NB-add-site-webfeed-radio-option.NB-selected {
     background: #1A2A3A;
     color: #6AADEA;
 }
+
 .NB-dark .NB-add-site-webfeed-subscribed {
     background: #1A2A1A;
     border-color: #2A5A2A;
 }
+
 .NB-dark .NB-add-site-webfeed-subscribed-title,
 .NB-dark .NB-add-site-webfeed-subscribed-desc {
     color: #80D080;
 }
+
 .NB-dark .NB-add-site-webfeed-folder-add-icon {
     border-color: #555;
     background: #333;
     color: #999;
 }
+
 .NB-dark .NB-add-site-webfeed-folder-add-icon:hover {
     border-color: #777;
     color: #CCC;
     background: #3A3A3A;
 }
+
 .NB-dark .NB-add-site-webfeed-folder-add-icon.NB-active {
     border-color: #5C89C9;
     color: #6AADEA;
     background: #1A2A3A;
 }
+
 .NB-dark .NB-add-site-webfeed-folder-input-row {
     border-color: #555;
 }
+
 .NB-dark .NB-add-site-webfeed-folder-input-row:focus-within {
     border-color: #5C89C9;
 }
+
 .NB-dark .NB-add-site-webfeed-folder-name {
     background: #333;
     color: #DDD;
 }
+
 .NB-dark .NB-add-site-webfeed-folder-name::placeholder {
     color: #777;
 }
@@ -32086,7 +32636,7 @@ h5.NB-classifier-section-header {
     font-size: 14px;
     font-weight: 500;
     color: #666;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .NB-archive-tab:hover {
@@ -32258,7 +32808,7 @@ h5.NB-classifier-section-header {
     border-radius: 20px;
     font-size: 13px;
     color: #333;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .NB-blocklist-item:hover {
@@ -32285,7 +32835,7 @@ h5.NB-classifier-section-header {
     border-radius: 50%;
     cursor: pointer;
     opacity: 0.5;
-    transition: all 0.15s ease;
+    transition: opacity 0.15s ease;
 }
 
 .NB-blocklist-remove:hover {
@@ -32316,7 +32866,7 @@ h5.NB-classifier-section-header {
     border: 1px solid #DDD;
     border-radius: 8px;
     font-size: 14px;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .NB-blocklist-input:focus {
@@ -32354,7 +32904,7 @@ h5.NB-classifier-section-header {
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, transform 0.15s ease;
 }
 
 .NB-blocklist-add-btn:hover {
@@ -32407,7 +32957,7 @@ h5.NB-classifier-section-header {
     font-weight: 600;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .NB-blocklist-save.NB-disabled {
@@ -32639,7 +33189,7 @@ h5.NB-classifier-section-header {
     border-radius: 6px;
     color: #666;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .NB-block-dialog-cancel:hover {
@@ -32656,7 +33206,7 @@ h5.NB-classifier-section-header {
     border-radius: 6px;
     color: #fff;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .NB-block-dialog-confirm:hover {
@@ -32714,7 +33264,7 @@ h5.NB-classifier-section-header {
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .NB-archive-new-conversation:hover {
@@ -32745,7 +33295,7 @@ h5.NB-classifier-section-header {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .NB-archive-sidebar-toggle:hover {
@@ -33059,7 +33609,7 @@ h5.NB-classifier-section-header {
     border-radius: 0;
     font-size: 11px;
     color: #999;
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .NB-tool-spinner {
@@ -33216,7 +33766,7 @@ h5.NB-classifier-section-header {
     font-size: 13px;
     color: #555;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .NB-archive-suggestion:hover {
@@ -33775,7 +34325,7 @@ h5.NB-classifier-section-header {
     border: 1px solid #E0E0E0;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .NB-archive-item:hover {
@@ -33878,7 +34428,7 @@ h5.NB-classifier-section-header {
     border: 1px solid rgba(217, 92, 51, 0.25);
     border-radius: 12px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
     align-self: flex-start;
 }
 
@@ -33998,7 +34548,7 @@ h5.NB-classifier-section-header {
     border: 1px solid #E0E0E0;
     border-radius: 6px;
     padding: 6px 10px;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .NB-archive-search-wrapper:focus-within {
@@ -34149,7 +34699,7 @@ h5.NB-classifier-section-header {
     border-radius: 12px;
     text-decoration: none;
     color: inherit;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     min-width: 180px;
 }
 
@@ -34229,7 +34779,7 @@ h5.NB-classifier-section-header {
     font-size: 13px;
     font-weight: 500;
     color: #666;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .NB-archive-extensions-button:hover {
@@ -34258,7 +34808,7 @@ h5.NB-classifier-section-header {
     opacity: 0;
     visibility: hidden;
     transform: translateY(-8px);
-    transition: all 0.2s ease;
+    transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
     z-index: 1000;
 }
 
@@ -34382,7 +34932,7 @@ h5.NB-classifier-section-header {
     color: #333;
     font-size: 13px;
     font-weight: 500;
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .NB-archive-assistant-ext-link:hover {
@@ -34537,7 +35087,7 @@ h5.NB-classifier-section-header {
     color: #FFF;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease;
 }
 
 .NB-category-manager-actions .NB-button:hover {
@@ -34765,7 +35315,7 @@ h5.NB-classifier-section-header {
     background: #FFF;
     border: 1px solid #E8E8E8;
     border-radius: 6px;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .NB-category-item:hover {
@@ -34851,7 +35401,7 @@ h5.NB-classifier-section-header {
     cursor: pointer;
     background: transparent;
     border: none;
-    transition: all 0.15s ease;
+    transition: color 0.15s ease, background-color 0.15s ease;
     border-radius: 6px 6px 0 0;
     position: relative;
 }
@@ -34931,7 +35481,7 @@ h5.NB-classifier-section-header {
     border: none;
     border-radius: 12px;
     margin-bottom: 20px;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .NB-merge-group.NB-drag-over {
@@ -35020,7 +35570,7 @@ h5.NB-classifier-section-header {
     border: none;
     border-radius: 6px;
     cursor: grab;
-    transition: all 0.15s ease;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -35094,7 +35644,7 @@ h5.NB-classifier-section-header {
     background: #F5F6F7;
     border: none;
     border-radius: 10px;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .NB-merge-unassigned-list.NB-drop-target {
@@ -35127,7 +35677,7 @@ h5.NB-classifier-section-header {
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     box-shadow: 0 2px 6px rgba(92, 137, 201, 0.3);
 }
 
@@ -35147,7 +35697,7 @@ button.NB-merge-group-apply.NB-button {
     border: none !important;
     border-radius: 5px !important;
     cursor: pointer !important;
-    transition: all 0.15s ease !important;
+    transition: background-color 0.15s ease !important;
     box-shadow: none !important;
     text-transform: none !important;
     margin: 0 !important;
@@ -35185,7 +35735,7 @@ button.NB-merge-group-apply.NB-button:hover {
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease;
 }
 
 .NB-split-candidate:hover {
@@ -35324,7 +35874,7 @@ button.NB-merge-group-apply.NB-button:hover {
     background: #F8F9FA;
     border: none;
     border-radius: 8px;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease;
 }
 
 .NB-all-category-item:hover {
@@ -36479,7 +37029,7 @@ button.NB-merge-group-apply.NB-button:hover {
     border: 1px solid #E0E0E0;
     border-radius: 16px;
     cursor: grab;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .NB-merge-pill:hover {
@@ -36574,7 +37124,7 @@ button.NB-merge-group-apply.NB-button:hover {
     background: #FAFAFA;
     border: 2px dashed #E0E0E0;
     border-radius: 8px;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .NB-unassigned-drop-zone.NB-drop-target {
@@ -36844,7 +37394,7 @@ button.NB-merge-group-apply.NB-button:hover {
     color: #999;
     cursor: pointer;
     border-radius: 4px;
-    transition: all 0.15s ease;
+    transition: color 0.15s ease, background-color 0.15s ease;
 }
 
 .NB-modal-category-manager .NB-merge-group-remove:hover {
@@ -36874,7 +37424,7 @@ button.NB-merge-group-apply.NB-button:hover {
     background: #FFF;
     border-radius: 6px;
     cursor: grab;
-    transition: all 0.15s ease;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -36976,7 +37526,7 @@ button.NB-merge-group-apply.NB-button:hover {
     background: #F8F9FA;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease;
 }
 
 .NB-modal-category-manager .NB-split-item:hover {
@@ -37690,26 +38240,49 @@ span.NB-briefing-inline-favicon {
 
 /* reader.css: Upsell banner for free users */
 .NB-briefing-upsell {
-    padding: 12px 14px;
-    background-color: #F0EDE4;
+    padding: 10px 14px;
     border-top: 1px solid #E0DDD4;
-    text-align: center;
-}
-
-.NB-briefing-upsell-text {
-    font-size: 12px;
-    color: #606060;
-    line-height: 1.4;
+    display: flex;
+    justify-content: center;
 }
 
 .NB-briefing-upsell-link {
-    color: #405BA8;
-    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     text-decoration: none;
+    padding: 4px 10px 4px 4px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    background: #fafafa;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    cursor: pointer;
+    flex: 0 0 auto;
 }
 
 .NB-briefing-upsell-link:hover {
-    text-decoration: underline;
+    background: rgba(99, 102, 241, 0.06);
+    border-color: #c4b5fd;
+}
+
+.NB-briefing-upsell-link .NB-archive-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.NB-briefing-upsell-text {
+    font-size: 11px;
+    color: #606060;
+    line-height: 1.3;
 }
 
 /* reader.css: Briefing summary story — the AI-generated overview at the top */
@@ -37947,7 +38520,7 @@ span.NB-briefing-inline-favicon {
     flex-shrink: 0;
     margin-top: 2px;
     position: relative;
-    transition: all 0.15s;
+    transition: border-color 0.15s;
 }
 
 .NB-briefing-style-option.NB-active .NB-briefing-style-radio {
@@ -38091,7 +38664,7 @@ span.NB-briefing-inline-favicon {
     flex-shrink: 0;
     margin-top: 2px;
     position: relative;
-    transition: all 0.15s;
+    transition: background-color 0.15s, border-color 0.15s;
 }
 
 .NB-briefing-section-item.NB-active .NB-briefing-section-checkbox {
@@ -38202,7 +38775,7 @@ span.NB-briefing-inline-favicon {
     cursor: pointer;
     vertical-align: middle;
     opacity: 0.3;
-    transition: all 0.15s;
+    transition: opacity 0.15s;
 }
 
 .NB-briefing-remove-custom-section:hover {
@@ -38439,7 +39012,9 @@ span.NB-briefing-inline-favicon {
 }
 
 @keyframes nb-briefing-spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .NB-briefing-progress-message {
