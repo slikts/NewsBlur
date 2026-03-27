@@ -1,27 +1,15 @@
 from django.test.runner import DiscoverRunner
 from django.test.utils import setup_databases
-from mongoengine.connection import connect, disconnect, disconnect_all
+from mongoengine.connection import disconnect_all
+
+from utils.test_mongo import configure_test_mongo_connection
 
 
 class TestRunner(DiscoverRunner):
     def setup_databases(self, **kwargs):
         from django.conf import settings
 
-        mongo_config = dict(getattr(settings, "MONGO_DB", {}))
-        db_name = mongo_config.pop("name", getattr(settings, "MONGO_DB_NAME", "newsblur_test"))
-        mongo_config.pop("alias", None)
-        mongo_config.setdefault("connect", False)
-        mongo_config.setdefault("unicode_decode_error_handler", "ignore")
-
-        for alias in ("default", "test"):
-            try:
-                disconnect(alias=alias)
-            except Exception:
-                pass
-
-        settings.MONGO_DB_NAME = db_name
-        settings.MONGODB = connect(db_name, alias="default", **mongo_config)
-        connect(db_name, alias="test", **mongo_config)
+        db_name = configure_test_mongo_connection(settings)
 
         print("Creating test-database: " + db_name)
 

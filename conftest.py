@@ -4,14 +4,43 @@ Pytest configuration and fixtures for NewsBlur tests.
 This module provides common fixtures used across all test files.
 """
 
+import os
+
 import pytest
-from django.contrib.auth.models import User
-from django.test import Client
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "newsblur_web.test_settings")
+
+import django
+
+django.setup()
+
+from utils.testrunner import TestRunner
+
+_runner = None
+_old_config = None
+
+
+def pytest_sessionstart(session):
+    global _runner, _old_config
+
+    _runner = TestRunner(verbosity=0, interactive=False)
+    _runner.setup_test_environment()
+    _old_config = _runner.setup_databases()
+
+
+def pytest_sessionfinish(session, exitstatus):
+    if _runner is None:
+        return
+
+    _runner.teardown_databases(_old_config)
+    _runner.teardown_test_environment()
 
 
 @pytest.fixture
 def user(db):
     """Create a test user."""
+    from django.contrib.auth.models import User
+
     return User.objects.create_user(
         username="testuser",
         email="test@test.com",
@@ -22,6 +51,8 @@ def user(db):
 @pytest.fixture
 def client():
     """Create a test client."""
+    from django.test import Client
+
     return Client()
 
 
@@ -50,6 +81,8 @@ def feed(db, user):
 @pytest.fixture
 def premium_user(db):
     """Create a premium user."""
+    from django.contrib.auth.models import User
+
     user = User.objects.create_user(
         username="premiumuser",
         email="premium@test.com",
