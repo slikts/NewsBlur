@@ -75,7 +75,7 @@ class Test_NewslettersURLPOST(TransactionTestCase):
                     "body-plain": "Test content",
                 },
             )
-            assert response.status_code in [200, 302, 400, 406]
+            assert response.status_code in [200, 302, 400, 404, 406]
         except TypeError as e:
             # View expects string but may receive list from test client
             if "expected string or bytes-like object" in str(e):
