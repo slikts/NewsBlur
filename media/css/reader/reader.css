@@ -5082,7 +5082,7 @@ body {
     max-width: 100%;
 }
 
-.NB-feed-story .NB-feed-story-content img {
+.NB-feed-story .NB-feed-story-content img:not(.NB-score-icon) {
     max-width: 100% !important;
     width: auto !important;
     height: auto;

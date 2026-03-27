@@ -71,6 +71,12 @@ NEWSBLUR.Views.StoryDetailView = Backbone.View.extend({
             this.collection.bind('render:intelligence', this.render_intelligence, this);
         }
 
+        // Listen for feed title changes to update story header in real time
+        this.story_feed = NEWSBLUR.assets.get_feed(this.model.get('story_feed_id'));
+        if (this.story_feed) {
+            this.listenTo(this.story_feed, 'change:feed_title', this.update_feed_title);
+        }
+
         // Binding directly instead of using event delegation. Need for speed.
         // this.$el.bind('mouseenter', this.mouseenter);
         // this.$el.bind('mouseleave', this.mouseleave);
@@ -237,6 +243,12 @@ NEWSBLUR.Views.StoryDetailView = Backbone.View.extend({
         this.$('.NB-feed-story-header-feed').remove();
         this.$('.NB-feed-story-header').replaceWith($(this.story_header_template(params)));
         this.generate_gradients();
+    },
+
+    update_feed_title: function () {
+        if (this.story_feed) {
+            this.$('.NB-feed-story-header-title').text(this.story_feed.get('feed_title'));
+        }
     },
 
     get_render_params: function () {
@@ -1247,7 +1259,8 @@ NEWSBLUR.Views.StoryDetailView = Backbone.View.extend({
         }
         if ($(e.target).hasClass("NB-classifier-highlight-positive") ||
             $(e.target).hasClass("NB-classifier-highlight-negative") ||
-            $(e.target).hasClass("NB-classifier-highlight-super-negative")) {
+            $(e.target).hasClass("NB-classifier-highlight-super-negative") ||
+            $(e.target).closest("[class*='NB-classifier-highlight-']").length) {
             // Let the click handler deal with classifier highlights
             return;
         }
@@ -1606,6 +1619,9 @@ NEWSBLUR.Views.StoryDetailView = Backbone.View.extend({
 
         var $doc = this.$(".NB-feed-story-content");
         $doc.unmark();
+        // Remove orphaned score icons left behind by unmark() which unwraps
+        // mark elements but preserves their children including appended icons
+        $doc.find('.NB-score-icon, .NB-score-icon-double').remove();
 
         $doc.attr('id', 'NB-highlighting');
 
