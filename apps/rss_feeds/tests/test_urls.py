@@ -109,7 +109,7 @@ class Test_RSSFeedsURLResolution(TransactionTestCase):
 
     def test_discover_feeds_resolves(self):
         """Test discover feeds URL resolves."""
-        url = reverse("discover-feeds")
+        url = reverse("discover-feeds", kwargs={"feed_id": "1"})
         resolved = resolve(url)
         assert resolved.view_name == "discover-feeds"
 
@@ -204,7 +204,7 @@ class Test_RSSFeedsURLAccess(TransactionTestCase):
     def test_discover_feeds_authenticated(self):
         """Test authenticated access to discover feeds."""
         self.client.login(username="testuser", password="testpass")
-        response = self.client.get(reverse("discover-feeds"))
+        response = self.client.get(reverse("discover-feeds", kwargs={"feed_id": "1"}))
         assert response.status_code in [200, 302]
 
 
