@@ -4,6 +4,8 @@ URL tests for the rss_feeds app.
 Tests URL resolution and basic access patterns for all rss_feeds endpoints.
 """
 
+from unittest.mock import patch
+
 from django.test import Client, TransactionTestCase
 from django.urls import resolve, reverse
 
@@ -201,13 +203,13 @@ class Test_RSSFeedsURLAccess(TransactionTestCase):
         response = self.client.get(reverse("trending-sites"))
         assert response.status_code == 200
 
-    def test_discover_feeds_authenticated(self):
-        """Test authenticated access to discover feeds (may fail in CI without OpenAI key)."""
+    @patch("apps.rss_feeds.models.Feed.count_similar_feeds")
+    def test_discover_feeds_authenticated(self, mock_similar):
+        """Test authenticated access to discover feeds."""
+        mock_similar.return_value = []
         self.client.login(username="testuser", password="testpass")
-        self.client.raise_request_exception = False
         response = self.client.get(reverse("discover-feeds", kwargs={"feed_id": "1"}))
-        # 500 is expected in CI/test where OpenAI API key isn't configured
-        assert response.status_code in [200, 302, 500]
+        assert response.status_code in [200, 302]
 
 
 class Test_RSSFeedsURLPOST(TransactionTestCase):
