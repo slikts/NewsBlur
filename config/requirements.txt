@@ -427,9 +427,7 @@ pyparsing==3.3.2
     #   httplib2
     #   newsblur
 pysocks==1.7.1
-    # via
-    #   newsblur
-    #   requests
+    # via newsblur
 pytest==9.0.2
     # via
     #   locust
@@ -494,11 +492,8 @@ requests==2.33.0
     #   requests-oauthlib
     #   stripe
     #   tiktoken
-    #   tweepy
 requests-oauthlib==2.0.0
-    # via
-    #   newsblur
-    #   tweepy
+    # via newsblur
 rsa==4.9.1
     # via google-auth
 s3transfer==0.16.0
@@ -524,7 +519,6 @@ six==1.17.0
     #   image
     #   paypalrestsdk
     #   python-dateutil
-    #   tweepy
     #   url-normalize
 smartypants==2.0.2
     # via newsblur
@@ -559,8 +553,6 @@ toml==0.10.2
     # via newsblur
 tqdm==4.67.3
     # via openai
-tweepy==3.9.0
-    # via newsblur
 typing-extensions==4.15.0
     # via
     #   anthropic
