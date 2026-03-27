@@ -66,7 +66,7 @@ urlpatterns = [
     re_path(
         r"^discover/(?P<feed_id>\d+)/?$",
         PermanentRedirectView.as_view(url="/discover/similar/%(feed_id)s"),
-        name="discover-feed-redirect",
+        name="discover-feed",
     ),
     re_path(
         r"^discover/feeds/?$",
