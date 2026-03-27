@@ -326,8 +326,14 @@ lint:
 	docker exec -t newsblur_web flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=venv,apps/analyzer/archive,utils/archive,vendor,.worktree,.claude
 	
 deps:
-	docker exec -t newsblur_web pip install -U uv
-	docker exec -t newsblur_web uv pip install -r requirements.txt
+	@WORKSPACE_NAME=$$(basename "$$(pwd)"); \
+	if [ -d ".git" ]; then \
+		CONTAINER_NAME="newsblur_web"; \
+	else \
+		CONTAINER_NAME="newsblur_web_$$WORKSPACE_NAME"; \
+	fi; \
+	docker exec -t $$CONTAINER_NAME sh -lc "cd /srv/newsblur && UV_PROJECT_ENVIRONMENT=/venv uv sync --locked"; \
+	docker exec -t $$CONTAINER_NAME sh -lc "cd /srv/newsblur && UV_PROJECT_ENVIRONMENT=/venv uv export --locked --no-hashes -o config/requirements.txt"
 
 jekyll_build:
 	cd blog && JEKYLL_ENV=production bundle exec jekyll build

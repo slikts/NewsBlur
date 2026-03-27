@@ -40,8 +40,9 @@ ENV PATH="/root/.local/bin:${PATH}"
 RUN uv venv /venv
 ENV PATH="/venv/bin:$PATH"
 ENV VIRTUAL_ENV="/venv"
+ENV UV_PROJECT_ENVIRONMENT="/venv"
 
-# Copy requirements and install with cache mount (big win for rebuilds)
-COPY config/requirements.txt /srv/newsblur/
+# Copy lock metadata and install with cache mount (big win for rebuilds)
+COPY pyproject.toml uv.lock /srv/newsblur/
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install -r requirements.txt
+    uv sync --locked --no-install-project
