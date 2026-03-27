@@ -21,7 +21,12 @@ class Test_ReaderPreferencesBootstrap(TestCase):
         self.user = User.objects.create_user(
             username="prefstest", password="testpass", email="prefs@test.com"
         )
+        MBriefingPreferences.objects(user_id=self.user.pk).delete()
         self.client.login(username="prefstest", password="testpass")
+
+    def tearDown(self):
+        MBriefingPreferences.objects(user_id=self.user.pk).delete()
+        super().tearDown()
 
     def test_daily_briefing_preference_defaults_false_in_reader_bootstrap(self):
         response = self.client.get(reverse("index"))

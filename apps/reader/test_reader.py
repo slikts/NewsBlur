@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase
 from django.test.client import Client
 from django.urls import reverse
 
@@ -8,7 +8,7 @@ from apps.reader.models import UserSubscriptionFolders
 from utils import json_functions as json
 
 
-class Test_Reader(TransactionTestCase):
+class Test_Reader(TestCase):
     fixtures = [
         "apps/rss_feeds/fixtures/initial_data.json",
         "apps/rss_feeds/fixtures/rss_feeds.json",

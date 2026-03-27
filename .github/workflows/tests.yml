@@ -56,7 +56,7 @@ jobs:
           # Retry docker compose up in case of transient network issues
           # Use CI override to remove ARM-specific JVM flags (UseSVE) that crash on x86_64
           for i in 1 2 3; do
-            docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d && break
+            docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d newsblur_web && break
             echo "Retry $i for docker compose up..."
             docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v || true
             sleep 10

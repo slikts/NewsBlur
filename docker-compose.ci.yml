@@ -4,6 +4,9 @@
 
 
 services:
+  newsblur_db_mongo:
+    command: 'mongod --port 29019 --wiredTigerCacheSizeGB 0.25 --wiredTigerEngineConfigString="checkpoint=(wait=60),file_manager=(close_idle_time=0)"'
+
   newsblur_db_elasticsearch:
     environment:
       - discovery.type=single-node
