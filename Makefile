@@ -417,7 +417,7 @@ pull:
 
 local_build_web:
 	# docker buildx build --load . --file=docker/newsblur_base_image.Dockerfile --tag=newsblur/newsblur_python3
-	docker build . --file=docker/newsblur_base_image.Dockerfile --tag=newsblur/newsblur_python3
+	docker build $(if $(filter 1 true yes,$(NO_CACHE)),--no-cache,) . --file=docker/newsblur_base_image.Dockerfile --tag=newsblur/newsblur_python3
 
 # Ensure buildx builder exists for multi-platform builds
 # The default 'docker' driver doesn't support multi-platform; we need 'docker-container'
@@ -434,27 +434,29 @@ buildx_setup:
 buildx_clean:
 	docker buildx prune -f
 
+BUILDX_NO_CACHE_FLAG := $(if $(filter 1 true yes,$(NO_CACHE)),--no-cache,)
+
 build_web: buildx_setup
-	docker buildx build . --platform linux/amd64,linux/arm64 --file=docker/newsblur_base_image.Dockerfile --tag=newsblur/newsblur_python3
+	docker buildx build . $(BUILDX_NO_CACHE_FLAG) --platform linux/amd64,linux/arm64 --file=docker/newsblur_base_image.Dockerfile --tag=newsblur/newsblur_python3
 build_node: buildx_setup
-	docker buildx build . --platform linux/amd64,linux/arm64 --file=docker/node/Dockerfile --tag=newsblur/newsblur_node
+	docker buildx build . $(BUILDX_NO_CACHE_FLAG) --platform linux/amd64,linux/arm64 --file=docker/node/Dockerfile --tag=newsblur/newsblur_node
 build_monitor: buildx_setup
-	docker buildx build . --platform linux/amd64,linux/arm64 --file=docker/monitor/Dockerfile --tag=newsblur/newsblur_monitor
+	docker buildx build . $(BUILDX_NO_CACHE_FLAG) --platform linux/amd64,linux/arm64 --file=docker/monitor/Dockerfile --tag=newsblur/newsblur_monitor
 build_deploy: buildx_setup
-	docker buildx build . --platform linux/amd64,linux/arm64 --file=docker/newsblur_deploy.Dockerfile --tag=newsblur/newsblur_deploy
+	docker buildx build . $(BUILDX_NO_CACHE_FLAG) --platform linux/amd64,linux/arm64 --file=docker/newsblur_deploy.Dockerfile --tag=newsblur/newsblur_deploy
 build: build_web build_node build_monitor build_deploy
 push_web: buildx_setup
-	docker buildx build . --push --platform linux/amd64,linux/arm64 --file=docker/newsblur_base_image.Dockerfile --tag=newsblur/newsblur_python3
+	docker buildx build . $(BUILDX_NO_CACHE_FLAG) --push --platform linux/amd64,linux/arm64 --file=docker/newsblur_base_image.Dockerfile --tag=newsblur/newsblur_python3
 push_web_py313: buildx_setup
-	docker buildx build . --push --platform linux/amd64,linux/arm64 --file=docker/newsblur_base_image.Dockerfile --tag=newsblur/newsblur_python3:py313
+	docker buildx build . $(BUILDX_NO_CACHE_FLAG) --push --platform linux/amd64,linux/arm64 --file=docker/newsblur_base_image.Dockerfile --tag=newsblur/newsblur_python3:py313
 push_node: buildx_setup
-	docker buildx build . --push --platform linux/amd64,linux/arm64 --file=docker/node/Dockerfile --tag=newsblur/newsblur_node
+	docker buildx build . $(BUILDX_NO_CACHE_FLAG) --push --platform linux/amd64,linux/arm64 --file=docker/node/Dockerfile --tag=newsblur/newsblur_node
 push_monitor: buildx_setup
-	docker buildx build . --push --platform linux/amd64,linux/arm64 --file=docker/monitor/Dockerfile --tag=newsblur/newsblur_monitor
+	docker buildx build . $(BUILDX_NO_CACHE_FLAG) --push --platform linux/amd64,linux/arm64 --file=docker/monitor/Dockerfile --tag=newsblur/newsblur_monitor
 push_deploy: buildx_setup
-	docker buildx build . --push --platform linux/amd64,linux/arm64 --file=docker/newsblur_deploy.Dockerfile --tag=newsblur/newsblur_deploy
+	docker buildx build . $(BUILDX_NO_CACHE_FLAG) --push --platform linux/amd64,linux/arm64 --file=docker/newsblur_deploy.Dockerfile --tag=newsblur/newsblur_deploy
 push_deploy_py313: buildx_setup
-	docker buildx build . --push --platform linux/amd64,linux/arm64 --file=docker/newsblur_deploy.Dockerfile --build-arg BASE_IMAGE=newsblur/newsblur_python3:py313 --tag=newsblur/newsblur_deploy:py313
+	docker buildx build . $(BUILDX_NO_CACHE_FLAG) --push --platform linux/amd64,linux/arm64 --file=docker/newsblur_deploy.Dockerfile --build-arg BASE_IMAGE=newsblur/newsblur_python3:py313 --tag=newsblur/newsblur_deploy:py313
 push_images: push_web push_node push_monitor push_deploy
 push: push_images
 
