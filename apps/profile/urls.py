@@ -56,5 +56,9 @@ urlpatterns = [
     re_path(r"^delete_all_sites/?", views.delete_all_sites, name="profile-delete-all-sites"),
     re_path(r"^email_optout/?", views.email_optout, name="profile-email-optout"),
     re_path(r"^ios_subscription_status/?", views.ios_subscription_status, name="profile-ios-subscription-status"),
+    re_path(r"^gift_checkout/?", views.gift_checkout, name="gift-checkout"),
+    re_path(r"^gift_checkout_complete/?", views.gift_checkout_complete, name="gift-checkout-complete"),
+    re_path(r"^referral_data/?", views.referral_data, name="referral-data"),
+    re_path(r"^gift_data/?", views.gift_data, name="gift-data"),
     re_path(r"debug/?", views.trigger_error, name="trigger-error"),
 ]
