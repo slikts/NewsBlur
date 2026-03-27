@@ -270,7 +270,7 @@ class FetchFeed:
                     % (self.feed.log_title[:30])
                 )
             self.fpf = feedparser.parse(processed_youtube_feed, sanitize_html=False)
-        elif re.match(r"(https?)?://(twitter|x)\.com/\w+/?", clean_address):
+        elif Feed.is_unsupported_feed_url(clean_address):
             logging.debug(
                 "   ***> [%-30s] ~FRTwitter/X feeds are no longer supported: %s"
                 % (self.feed.log_title[:30], address)

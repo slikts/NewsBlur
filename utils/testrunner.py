@@ -1,20 +1,27 @@
-import os
-
 from django.test.runner import DiscoverRunner
 from django.test.utils import setup_databases
-from mongoengine.connection import connect, disconnect_all
+from mongoengine.connection import connect, disconnect, disconnect_all
 
 
 class TestRunner(DiscoverRunner):
     def setup_databases(self, **kwargs):
-        db_name = "newsblur_test"
+        from django.conf import settings
 
-        # Register a test database alias without disconnecting the main connection
-        # The main connection is needed for migrations that use settings.MONGODB
-        if os.getenv("DOCKERBUILD"):
-            connect(db_name, alias="test", host="newsblur_db_mongo", port=29019, connect=False)
-        else:
-            connect(db_name, alias="test", host="127.0.0.1", port=27017, connect=False)
+        mongo_config = dict(getattr(settings, "MONGO_DB", {}))
+        db_name = mongo_config.pop("name", getattr(settings, "MONGO_DB_NAME", "newsblur_test"))
+        mongo_config.pop("alias", None)
+        mongo_config.setdefault("connect", False)
+        mongo_config.setdefault("unicode_decode_error_handler", "ignore")
+
+        for alias in ("default", "test"):
+            try:
+                disconnect(alias=alias)
+            except Exception:
+                pass
+
+        settings.MONGO_DB_NAME = db_name
+        settings.MONGODB = connect(db_name, alias="default", **mongo_config)
+        connect(db_name, alias="test", **mongo_config)
 
         print("Creating test-database: " + db_name)
 
@@ -22,7 +29,6 @@ class TestRunner(DiscoverRunner):
 
         # Ensure Site exists for subdomain middleware
         # Use get_or_create to avoid conflicts with fixtures that may also create Sites
-        from django.conf import settings
         from django.contrib.sites.models import Site
 
         try:
@@ -37,6 +43,7 @@ class TestRunner(DiscoverRunner):
 
     def teardown_databases(self, old_config, **kwargs):
         import pymongo
+        from django.conf import settings
 
         # Disconnect mongoengine test alias
         try:
@@ -44,13 +51,10 @@ class TestRunner(DiscoverRunner):
         except Exception:
             pass
 
-        # Use Docker MongoDB settings when in Docker environment
-        if os.getenv("DOCKERBUILD"):
-            conn = pymongo.MongoClient("newsblur_db_mongo", 29019)
-        else:
-            conn = pymongo.MongoClient("127.0.0.1", 27017)
-
-        db_name = "newsblur_test"
+        mongo_config = dict(getattr(settings, "MONGO_DB", {}))
+        db_name = mongo_config.pop("name", getattr(settings, "MONGO_DB_NAME", "newsblur_test"))
+        host = mongo_config.get("host", "127.0.0.1:27017")
+        conn = pymongo.MongoClient(host)
         try:
             conn.drop_database(db_name)
             print("Dropping test-database: %s" % db_name)

@@ -26,7 +26,13 @@ from apps.analyzer.models import (
     compute_story_score,
 )
 from apps.reader.models import RUserStory, UserSubscription, UserSubscriptionFolders
-from apps.rss_feeds.models import Feed, MStarredStory, MStarredStoryCounts, MStory
+from apps.rss_feeds.models import (
+    Feed,
+    MStarredStory,
+    MStarredStoryCounts,
+    MStory,
+    UNSUPPORTED_SOCIAL_FEED_MESSAGE,
+)
 from apps.rss_feeds.text_importer import TextImporter
 from apps.social.models import MSharedStory, MSocialServices, MSocialSubscription
 from apps.social.tasks import SyncFacebookFriends
@@ -613,6 +619,8 @@ def api_share_new_story(request):
 
     if not story_url:
         return {"errors": [{"message": "Invalid story URL"}]}
+    if Feed.is_unsupported_feed_url(story_url):
+        return {"errors": [{"message": UNSUPPORTED_SOCIAL_FEED_MESSAGE}]}
 
     logging.user(request.user, "~FBFinding feed (api_share_new_story): %s" % story_url)
     original_feed = Feed.get_feed_from_url(story_url, create=True, fetch=True)
@@ -728,6 +736,8 @@ def api_save_new_story(request):
 
     if not story_url:
         return {"errors": [{"message": "Invalid story URL"}]}
+    if Feed.is_unsupported_feed_url(story_url):
+        return {"errors": [{"message": UNSUPPORTED_SOCIAL_FEED_MESSAGE}]}
 
     logging.user(request.user, "~FBFinding feed (api_save_new_story): %s" % story_url)
     original_feed = Feed.get_feed_from_url(story_url)

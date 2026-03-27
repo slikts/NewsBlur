@@ -488,6 +488,24 @@ class Test_GetFeedFromUrl(TestCase):
         result = Feed.get_feed_from_url("http://example.com/whatsapp-link", create=False, fetch=True)
         self.assertIsNone(result)
 
+    @patch("apps.rss_feeds.models.requests.get")
+    @patch("apps.rss_feeds.models.feedfinder_pilgrim")
+    @patch("apps.rss_feeds.models.feedfinder_forman")
+    def test_get_feed_from_url__unsupported_social_urls(self, mock_forman, mock_pilgrim, mock_requests_get):
+        """Twitter/X URLs should be rejected before feed creation or discovery."""
+        for url in ("https://twitter.com/newsblur", "https://x.com/newsblur/status/12345"):
+            with self.subTest(url=url):
+                with patch.object(
+                    Feed.objects, "create", side_effect=AssertionError("Unexpected feed creation")
+                ) as mock_create:
+                    result = Feed.get_feed_from_url(url, create=True, fetch=True)
+                self.assertIsNone(result)
+                mock_create.assert_not_called()
+
+        mock_forman.find_feeds.assert_not_called()
+        mock_pilgrim.feeds.assert_not_called()
+        mock_requests_get.assert_not_called()
+
 
 class Test_FeedSave(TestCase):
     """Tests for Feed.save edge cases."""

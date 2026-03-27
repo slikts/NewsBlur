@@ -338,17 +338,24 @@ deps:
 jekyll_build:
 	cd blog && JEKYLL_ENV=production bundle exec jekyll build
 	
-# runs tests with pytest
-# Usage: make test [SCOPE=apps] [ARGS="-v"]
+# runs Django tests
+# Usage: make test [SCOPE=apps] [ARGS="-v 1 --failfast"]
 SCOPE ?= apps
-ARGS ?= -v --tb=short
+ARGS ?= -v 1 --failfast
 test:
-	docker compose exec -T newsblur_web pytest $(SCOPE) $(ARGS)
+	docker compose exec -T newsblur_web python3 manage.py test $(SCOPE) --noinput $(ARGS)
 
-# runs Django tests (legacy)
-# Usage: make test-django [SCOPE=apps.reader] [ARGS="--noinput -v 2"]
+# runs Django tests (legacy alias)
+# Usage: make test-django [SCOPE=apps.reader] [ARGS="-v 2"]
 test-django:
 	docker compose exec -T newsblur_web python3 manage.py test $(SCOPE) --noinput $(ARGS)
+
+# runs tests with pytest
+# Usage: make test-pytest [PYTEST_SCOPE=apps] [PYTEST_ARGS="-v --tb=short"]
+PYTEST_SCOPE ?= apps
+PYTEST_ARGS ?= -v --tb=short
+test-pytest:
+	docker compose exec -T newsblur_web pytest $(PYTEST_SCOPE) $(PYTEST_ARGS)
 
 # runs river stories tests with query profiling
 test-river:
