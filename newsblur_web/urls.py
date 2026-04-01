@@ -6,6 +6,7 @@ from django.contrib.sitemaps.views import sitemap
 from django.urls import include, re_path
 from django.views.generic import RedirectView
 
+from apps.mcp import views as mcp_views
 from apps.profile import views as profile_views
 from apps.reader import views as reader_views
 from apps.social import views as social_views
@@ -83,6 +84,9 @@ urlpatterns = [
     re_path(r"^features/archive/?$", static_views.feature_archive, name="feature-archive"),
     re_path(r"^features/saved-stories/?$", static_views.feature_saved_stories, name="feature-saved-stories"),
     re_path(r"^features/native-apps/?$", static_views.feature_native_apps, name="feature-native-apps"),
+    re_path(r"^features/mcp/?$", static_views.feature_mcp, name="feature-mcp"),
+    re_path(r"^features/cli/?$", static_views.feature_cli, name="feature-cli"),
+    re_path(r"^features/mcp-cli/?$", static_views.feature_mcp_cli_redirect, name="feature-mcp-cli"),
     re_path(
         r"^features/story-clustering/?$",
         static_views.feature_story_clustering,
@@ -112,6 +116,17 @@ urlpatterns = [
     re_path(r"^privacy/?", static_views.privacy, name="privacy"),
     re_path(r"^tos/?", static_views.tos, name="tos"),
     re_path(r"^manifest.webmanifest", static_views.webmanifest, name="webmanifest"),
+    # MCP OAuth discovery (RFC 8414 / RFC 9728)
+    re_path(
+        r"^\.well-known/oauth-authorization-server/mcp/?$",
+        mcp_views.oauth_authorization_server_metadata,
+        name="mcp-oauth-metadata",
+    ),
+    re_path(
+        r"^\.well-known/oauth-protected-resource/mcp/?$",
+        mcp_views.oauth_protected_resource_metadata,
+        name="mcp-oauth-protected-resource",
+    ),
     re_path(
         r"^.well-known/apple-app-site-association",
         static_views.apple_app_site_assoc,

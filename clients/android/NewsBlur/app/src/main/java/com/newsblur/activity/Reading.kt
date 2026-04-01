@@ -148,6 +148,11 @@ abstract class Reading :
     private var allowImmediateFinish = false
     private var predictiveBackInProgress = false
 
+    // Guard against marking stories read during activity recreation (e.g., rotation).
+    // When the activity is recreated, ViewPager state restoration can fire onPageSelected
+    // before the pager is properly positioned, which would incorrectly mark stories as read.
+    private var isRestoringState = false
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -189,6 +194,7 @@ abstract class Reading :
             if (savedInstanceBundle == null) {
                 intent.getStringExtra(EXTRA_STORY_HASH)
             } else {
+                isRestoringState = true
                 savedInstanceBundle.getString(EXTRA_STORY_HASH)
             }
 
@@ -416,6 +422,7 @@ abstract class Reading :
         if (position >= 0) {
             pager!!.setCurrentItem(position, false)
             onPageSelected(position)
+            isRestoringState = false
             // now that the pager is getting the right story, make it visible
             pager!!.visibility = View.VISIBLE
             binding.readingEmptyViewText.visibility = View.INVISIBLE
@@ -555,7 +562,11 @@ abstract class Reading :
                             }
                         }
 
-                        triggerMarkStoryReadBehavior(story)
+                        // Don't mark stories read during activity recreation (e.g., rotation).
+                        // The user is still on the same story, not navigating to a new one.
+                        if (!isRestoringState) {
+                            triggerMarkStoryReadBehavior(story)
+                        }
                     }
                     checkStoryCount(position)
                     updateOverlayText()
@@ -679,6 +690,9 @@ abstract class Reading :
      * load is not needed and all latches are tripped.
      */
     private fun checkStoryCount(position: Int) {
+        if (fs?.isDailyBriefing == true) {
+            return
+        }
         storyCounts?.let { count ->
             if (AppConstants.VERBOSE_LOG) {
                 Log.d(this.javaClass.name, String.format("story %d of %d selected, stopLoad: %b", position, count, stopLoading))
@@ -714,6 +728,9 @@ abstract class Reading :
     }
 
     private fun triggerRefresh(desiredStoryCount: Int) {
+        if (fs?.isDailyBriefing == true) {
+            return
+        }
         if (!stopLoading) {
             val gotSome =
                 fs?.let { syncServiceState.requestMoreForFeed(it, desiredStoryCount, storyCounts) }

@@ -156,6 +156,7 @@ def unfollow_twitter_account(request):
 @oauth_login_required
 def api_user_info(request):
     user = request.user
+    feed_count = UserSubscription.objects.filter(user=user).count()
 
     return json.json_response(
         request,
@@ -164,6 +165,11 @@ def api_user_info(request):
                 "name": user.username,
                 "id": user.pk,
                 "email": user.email,
+                "is_premium": user.profile.is_premium,
+                "is_archive": user.profile.is_archive,
+                "is_pro": user.profile.is_pro,
+                "feed_count": feed_count,
+                "premium_expire": int(user.profile.premium_expire.strftime("%s")) if user.profile.premium_expire else 0,
             }
         },
     )

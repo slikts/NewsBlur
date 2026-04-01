@@ -142,7 +142,7 @@ worktree:
 worktree-log:
 	@WORKSPACE_NAME=$$(basename "$$(pwd)"); \
 	if [ -f ".worktree/docker-compose.$${WORKSPACE_NAME}.yml" ]; then \
-		COMPOSE_PROJECT_NAME="$$WORKSPACE_NAME" docker compose -f ".worktree/docker-compose.$${WORKSPACE_NAME}.yml" logs -f --tail 20 newsblur_web newsblur_node task_celery; \
+		COMPOSE_PROJECT_NAME="$$WORKSPACE_NAME" docker compose -f ".worktree/docker-compose.$${WORKSPACE_NAME}.yml" logs -f --tail 20 newsblur_web newsblur_node task_celery newsblur_mcp; \
 	else \
 		echo "No worktree configuration found. Run 'make worktree' first."; \
 	fi
@@ -271,11 +271,13 @@ bash:
 debug:
 	docker attach ${newsblur}
 log:
-	docker compose logs -f --tail 20 newsblur_web newsblur_node
+	docker compose logs -f --tail 20 newsblur_web newsblur_node newsblur_mcp
 logweb:
 	docker compose logs -f --tail 20 newsblur_web newsblur_node newsblur_celery
 logcelery:
 	docker compose logs -f --tail 20 newsblur_celery
+logmcp:
+	docker compose logs -f --tail 20 newsblur_mcp
 logtask: logcelery
 logmongo:
 	docker compose logs -f newsblur_db_mongo
@@ -421,6 +423,7 @@ pull:
 	docker pull newsblur/newsblur_python3
 	docker pull newsblur/newsblur_node
 	docker pull newsblur/newsblur_monitor
+	docker pull newsblur/newsblur_mcp
 
 local_build_web:
 	# docker buildx build --load . --file=docker/newsblur_base_image.Dockerfile --tag=newsblur/newsblur_python3
@@ -451,7 +454,9 @@ build_monitor: buildx_setup
 	docker buildx build . $(BUILDX_NO_CACHE_FLAG) --platform linux/amd64,linux/arm64 --file=docker/monitor/Dockerfile --tag=newsblur/newsblur_monitor
 build_deploy: buildx_setup
 	docker buildx build . $(BUILDX_NO_CACHE_FLAG) --platform linux/amd64,linux/arm64 --file=docker/newsblur_deploy.Dockerfile --tag=newsblur/newsblur_deploy
-build: build_web build_node build_monitor build_deploy
+build_mcp: buildx_setup
+	docker buildx build ./newsblur_mcp $(BUILDX_NO_CACHE_FLAG) --platform linux/amd64,linux/arm64 --file=newsblur_mcp/Dockerfile --tag=newsblur/newsblur_mcp
+build: build_web build_node build_monitor build_deploy build_mcp
 push_web: buildx_setup
 	docker buildx build . $(BUILDX_NO_CACHE_FLAG) --push --platform linux/amd64,linux/arm64 --file=docker/newsblur_base_image.Dockerfile --tag=newsblur/newsblur_python3
 push_web_py313: buildx_setup
@@ -464,7 +469,11 @@ push_deploy: buildx_setup
 	docker buildx build . $(BUILDX_NO_CACHE_FLAG) --push --platform linux/amd64,linux/arm64 --file=docker/newsblur_deploy.Dockerfile --tag=newsblur/newsblur_deploy
 push_deploy_py313: buildx_setup
 	docker buildx build . $(BUILDX_NO_CACHE_FLAG) --push --platform linux/amd64,linux/arm64 --file=docker/newsblur_deploy.Dockerfile --build-arg BASE_IMAGE=newsblur/newsblur_python3:py313 --tag=newsblur/newsblur_deploy:py313
-push_images: push_web push_node push_monitor push_deploy
+push_mcp: buildx_setup
+	docker buildx build ./newsblur_mcp $(BUILDX_NO_CACHE_FLAG) --push --platform linux/amd64,linux/arm64 --file=newsblur_mcp/Dockerfile --tag=newsblur/newsblur_mcp
+push_cli:
+	gh workflow run publish-cli.yml -f dry_run=false
+push_images: push_web push_node push_monitor push_deploy push_mcp
 push: push_images
 
 # Tasks
@@ -476,6 +485,9 @@ web: deploy_web
 deploy_static:
 	ansible-playbook ansible/deploy.yml -l app --tags static
 static: deploy_static
+deploy_mcp:
+	ansible-playbook ansible/playbooks/deploy_mcp.yml
+mcp: deploy_mcp
 deploy_node:
 	ansible-playbook ansible/deploy.yml -l node
 node: deploy_node
@@ -649,7 +661,7 @@ offsite-backup:
 	ssh $(HA_HOST) "$(HA_SCRIPTS)/offsite_pull.sh"
 
 offsite-backup-status:
-	@ssh $(HA_HOST) "$(HA_SCRIPTS)/mount_backup_drive.sh > /dev/null && (echo '=== Backup log ==='; tail -15 /media/newsblur-backup/backup.log 2>/dev/null; echo; echo '=== Mongo stream ==='; tail -5 /media/newsblur-backup/backup_run.log 2>/dev/null; echo; /config/scripts/venv/bin/python3 /config/scripts/offsite_status.py); $(HA_SCRIPTS)/unmount_backup_drive.sh > /dev/null"
+	@ssh $(HA_HOST) "$(HA_SCRIPTS)/mount_backup_drive.sh > /dev/null && (echo '=== Backup log ==='; tail -15 /media/newsblur-backup/backup.log 2>/dev/null; echo; echo '=== Mongo stream ==='; tail -5 /media/newsblur-backup/backup_run.log 2>/dev/null; echo; /config/scripts/venv/bin/python3 /config/scripts/offsite_status.py); if pgrep -f offsite_pull.sh > /dev/null 2>&1; then echo '  (drive left mounted — backup in progress)'; else $(HA_SCRIPTS)/unmount_backup_drive.sh > /dev/null; fi"
 
 offsite-backup-uninstall:
 	@$(call log,~FY---> Removing off-site backup from HA box~ST)

@@ -12,7 +12,7 @@
   <link href="/feed-page-3.xml" rel="next" type="application/atom+xml" />
   
 
-  <updated>2026-03-26T19:30:50-04:00</updated>
+  <updated>2026-03-31T22:39:25-04:00</updated>
   <id>https://blog.newsblur.com/feed.xml</id>
   <title type="html">The NewsBlur Blog</title>
   
@@ -22,6 +22,102 @@ A new sound of an old instrument.
   
   
 
+  
+  <entry>
+    <title type="html">New gesture-based layout for the NewsBlur iPad App</title>
+    <link href="https://blog.newsblur.com/2022/03/28/redesigned-ios-layout/" rel="alternate" type="text/html" title="New gesture-based layout for the NewsBlur iPad App" />
+    <published>2022-03-28T00:00:00-04:00</published>
+    <updated>2022-03-28T00:00:00-04:00</updated>
+    <id>https://blog.newsblur.com/2022/03/28/redesigned-ios-layout</id>
+    <content type="html" xml:base="https://blog.newsblur.com/2022/03/28/redesigned-ios-layout/">
+      <![CDATA[<p>We have a big update for you on iOS, complete with a redesigned layout engine. You’ll see this mostly on iPad, where you can now interactively swipe between panes, customize how many panes you see, and even customize where the story titles are on the screen relative to the story content.</p>
+
+<p>Let’s take a look at all of the new features, starting with the improved gesture-based layout engine for navigating between stories and feeds.</p>
+
+<p>
+    <video autoplay="autoplay" loop="true" muted="" playsinline="" width="650" style="width: 650px;border: 2px solid rgba(0,0,0,0.1);margin: 0 auto;display: block;">
+        <source src="/assets/ipad-redesigned-layout-2.mp4" type="video/mp4" />
+    </video>
+</p>
+
+<p>A whole bunch of new controls and customizations have been added to the settings menu in the story titles menu, which is where you can find these new options for 2-column/3-column/full screen view panes.</p>
+
+<p><img src="/assets/ipad-story-title-customizations.png" /></p>
+
+<p>There’s also a new homescreen widget for showing 3-6 stories on your dashboard.</p>
+
+<p><img src="/assets/ipad-widget.png" /></p>
+
+<p>You can also expect to find feature parity with Android and the web when it comes to the new image preview and content preview options for story titles.</p>
+
+<p><img src="/assets/ipad-image-preview.png" /></p>
+
+<p>You can now save stories and subscribe to feeds from other apps using the NewsBlur Share extension. This includes your saved story tags and associated counts.</p>
+
+<p><img src="/assets/iphone-share-extension.png" style="margin: 0 auto; display: block; width: 450px;" /></p>
+
+<p>This release also contains numerous improvements, subtle refinements, and assorted fixed bugs.</p>
+
+<p>If you have any ideas for how you would like to see the iPad and iPhone app improved, please post ideas to the <a href="https://forum.newsblur.com">NewsBlur Forum</a>. I’m all ears and would love to prioritize improvements or changes that create a better mobile reading experience.</p>
+]]>
+    </content>
+    
+    
+    
+    <category term="ios" />
+    
+    
+    <summary type="html">
+      <![CDATA[We have a big update for you on iOS, complete with a redesigned layout engine. You’ll see this mostly on iPad, where you can now interactively swipe between panes, customize how many panes you see, and even customize where the story titles are on the screen relative to the story...]]>
+    </summary>
+    
+  </entry>
+  
+  <entry>
+    <title type="html">Magazine view offers a new perspective</title>
+    <link href="https://blog.newsblur.com/2022/03/10/magazine-view/" rel="alternate" type="text/html" title="Magazine view offers a new perspective" />
+    <published>2022-03-10T00:00:00-05:00</published>
+    <updated>2022-03-10T00:00:00-05:00</updated>
+    <id>https://blog.newsblur.com/2022/03/10/magazine-view</id>
+    <content type="html" xml:base="https://blog.newsblur.com/2022/03/10/magazine-view/">
+      <![CDATA[<p>Here’s a nice feature that brings a new perspective to your stories. It’s called the Magazine view and features larger images, longer story content previews, and improved legibility of text.</p>
+
+<p>Take a look and see how the Magazine view shwocases stories in a new way:</p>
+
+<p><img src="/assets/magazine-light.png" style="width: 750px;border: 1px solid #A0A0A0;margin: 12px auto;" /></p>
+
+<p>The Magazine view is also customizable. By default, fonts are a bit larger in the Magazine view. You can still change font sizes as well as customize the position and size of the image preview. There is also a control for how long the story content previews are, all found inside the Style popover.</p>
+
+<p><img src="/assets/style-popover-bottom.png" style="width: 375px;border: 1px solid #A0A0A0;margin: 24px auto;display: block;" /></p>
+
+<p>And in dark mode, these customizations show how tailored you can make NewsBlur look.</p>
+
+<p><img src="/assets/magazine-dark.png" style="width: 750px;border: 1px solid #A0A0A0;margin: 12px auto;" /></p>
+
+<p>You can access the new Magazine view next to the other story title view layouts.</p>
+
+<p><img src="/assets/magazine-views.png" style="width: 450px;border: 1px solid #A0A0A0;margin: 24px auto;display: block;" /></p>
+
+<p>The Grid view also features improvements to the story content preview. New lines are now preserved in both Magazine and Grid views, so you can capture a bit of longer form stories without opening them up.</p>
+
+<p><img src="/assets/grid-dark.png" style="width: 750px;border: 1px solid #A0A0A0;margin: 12px auto;" /></p>
+
+<p>Also included are some backend changes to how YouTube videos thumbnail are found, so you should see even more image previews in your feeds.</p>
+
+]]>
+    </content>
+    
+    
+    
+    <category term="web" />
+    
+    
+    <summary type="html">
+      <![CDATA[Here’s a nice feature that brings a new perspective to your stories. It’s called the Magazine view and features larger images, longer story content previews, and improved legibility of text.
+]]>
+    </summary>
+    
+  </entry>
   
   <entry>
     <title type="html">Redesigning NewsBlur on the web, iOS, and Android</title>
@@ -1225,90 +1321,6 @@ $ cat /var/log/mongodb/mongod.log | egrep -v "159.65.XX.XX|161.89.XX.XX|&lt;&lt;
     
     <summary type="html">
       <![CDATA[You can now save a search as a saved search feed. This works for individual sites, folders, All Site Stories, saved stories, and blurblogs.
-]]>
-    </summary>
-    
-  </entry>
-  
-  <entry>
-    <title type="html">Last day to back Turn Touch: NewsBlur’s beautiful remote</title>
-    <link href="https://blog.newsblur.com/2017/03/09/last-day-to-back-turn-touch-newsblurs-beautiful/" rel="alternate" type="text/html" title="Last day to back Turn Touch: NewsBlur’s beautiful remote" />
-    <published>2017-03-09T05:00:33-05:00</published>
-    <updated>2017-03-09T05:00:33-05:00</updated>
-    <id>https://blog.newsblur.com/2017/03/09/last-day-to-back-turn-touch-newsblurs-beautiful</id>
-    <content type="html" xml:base="https://blog.newsblur.com/2017/03/09/last-day-to-back-turn-touch-newsblurs-beautiful/">
-      <![CDATA[<p><strong>This is it, the final countdown!</strong></p>
-
-<p>Tonight at 8pm PT the <a href="https://www.kickstarter.com/projects/samuelclay/turn-touch-beautiful-control/">Turn Touch campaign</a> will end and the project will be successfully funded. Judging from the $50,000 raised already, I think Turn Touch has a long life ahead of it.</p>
-
-<p><a href="https://www.kickstarter.com/projects/samuelclay/turn-touch-beautiful-control/"><img src="https://s3.amazonaws.com/static.newsblur.com/turntouch/animated-newsblur-live.gif" alt="" /></a></p>
-
-<h5 id="watch-the-2-minute-demo-on-vimeo"><a href="https://vimeo.com/207556527">Watch the 2 minute demo on Vimeo</a></h5>
-
-<p>Apart from being the only remote control in the world built for a news reader, Turn Touch is the handiest shortcut for your lights, music, and apps. It’s basically a customizable remote with a knack for smart homes.</p>
-
-<p>Supporting Turn Touch is a way of supporting NewsBlur. They are part of the same suite of productivity tools made by the <a href="https://twitter.com/samuelclay">same person</a>. By buying a Turn Touch and backing this Kickstarter, you’re continuing to fund the development of great tools.</p>
-
-<p>So please <a href="https://www.kickstarter.com/projects/samuelclay/turn-touch-beautiful-control/">head to Kickstarter and buy yourself the $59 mahogany remote</a>, even if you do not yet have any smart home devices. This remote is the easiest way to start connecting your home.</p>
-
-<p><a href="https://www.kickstarter.com/projects/samuelclay/turn-touch-beautiful-control/"><img src="https://s3.amazonaws.com/static.newsblur.com/turntouch/padauk-book.jpg" alt="" /></a></p>
-
-]]>
-    </content>
-    
-    
-    
-    <category term="turntouch" />
-    
-    
-    <summary type="html">
-      <![CDATA[This is it, the final countdown!
-]]>
-    </summary>
-    
-  </entry>
-  
-  <entry>
-    <title type="html">Introducing Turn Touch, a beautiful wooden remote for lights, devices, apps, and NewsBlur</title>
-    <link href="https://blog.newsblur.com/2017/02/07/introducing-turn-touch-a-beautiful-wooden-remote/" rel="alternate" type="text/html" title="Introducing Turn Touch, a beautiful wooden remote for lights, devices, apps, and NewsBlur" />
-    <published>2017-02-07T09:32:32-05:00</published>
-    <updated>2017-02-07T09:32:32-05:00</updated>
-    <id>https://blog.newsblur.com/2017/02/07/introducing-turn-touch-a-beautiful-wooden-remote</id>
-    <content type="html" xml:base="https://blog.newsblur.com/2017/02/07/introducing-turn-touch-a-beautiful-wooden-remote/">
-      <![CDATA[<figure class="tmblr-full" data-orig-height="1333" data-orig-width="2000" data-orig-src="https://turntouch.com/static/images/media-kit/photos/Turn%20Touch-3259c.jpg"><img style="width: 650px;border: 1px solid #909090;" data-orig-height="1333" data-orig-width="2000" src="https://turntouch.com/static/images/media-kit/photos/Turn%20Touch-3259c.jpg" /></figure>
-
-<p><a href="https://turntouch.com/kickstarter">Turn Touch</a> is a solid wood remote… and it’s about to change the way you use NewsBlur.</p>
-
-<p><strong>Change how?</strong></p>
-
-<p>Here’s how. Turn Touch connects to apps and devices in your home. Think Hue lights and Sonos speakers. Your Mac, your phone, etc.</p>
-
-<p>It also connects to NewsBlur.</p>
-
-<figure class="tmblr-full" data-orig-height="760" data-orig-width="1360" data-orig-src="https://turntouch.com/static/images/media-kit/graphics/use-case-news@2x.jpg"><img style="width: 650px;border: 1px solid #909090;" data-orig-height="760" data-orig-width="1360" src="https://turntouch.com/static/images/media-kit/graphics/use-case-news@2x.jpg" /></figure>
-
-<p>This is big. It means you can wake up in the morning, grab a cup of coffee, and cycle through news from across the room. Or, hook your Mac up to a display (maybe your living room TV) and skip through photo blogs, headlines, and the day’s best writing.</p>
-
-<p>It’s kind of like getting a new set of speakers. Where before, you’d be chained to your computer with headphones; now, you can listen to music from anywhere you’d like. With Turn Touch, you can leave your computer and read the news no matter what you’re doing— laundry, the dishes, or enjoying a lazy Sunday on your couch.</p>
-
-<figure class="tmblr-full" data-orig-height="877" data-orig-width="2000" data-orig-src="https://turntouch.com/static/images/media-kit/photos/Turn%20Touch-3248c.jpg"><img style="width: 650px;border: 1px solid #909090;" data-orig-height="877" data-orig-width="2000" src="https://turntouch.com/static/images/media-kit/photos/Turn%20Touch-3248c.jpg" /></figure>
-
-<p><strong>Get one. Or all three.</strong></p>
-
-<p><a href="https://turntouch.com/kickstarter">Turn Touch is on Kickstarter</a>. Back the project to get your very own. Or—and this is my sincere recommendation—get the complete set, save some money, and give one away to a friend.</p>
-
-<p>I’ve been working on Turn Touch for years and I hope it shows.</p>
-
-]]>
-    </content>
-    
-    
-    
-    <category term="turntouch" />
-    
-    
-    <summary type="html">
-      <![CDATA[
 ]]>
     </summary>
     

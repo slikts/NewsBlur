@@ -10,7 +10,7 @@
   <link href="/feed-page-2.xml" rel="next" type="application/atom+xml" />
   
 
-  <updated>2026-03-26T19:30:50-04:00</updated>
+  <updated>2026-03-31T22:39:25-04:00</updated>
   <id>https://blog.newsblur.com/feed.xml</id>
   <title type="html">The NewsBlur Blog</title>
   
@@ -20,6 +20,284 @@ A new sound of an old instrument.
   
   
 
+  
+  <entry>
+    <title type="html">The NewsBlur MCP Server and CLI Tool</title>
+    <link href="https://blog.newsblur.com/2026/04/01/mcp-server-and-cli/" rel="alternate" type="text/html" title="The NewsBlur MCP Server and CLI Tool" />
+    <published>2026-04-01T00:00:00-04:00</published>
+    <updated>2026-04-01T00:00:00-04:00</updated>
+    <id>https://blog.newsblur.com/2026/04/01/mcp-server-and-cli</id>
+    <content type="html" xml:base="https://blog.newsblur.com/2026/04/01/mcp-server-and-cli/">
+      <![CDATA[<p>NewsBlur has always had an API. Every feature in the web app, the iOS app, and the Android app runs through it. But APIs are for developers. Today I’m shipping two new ways to interact with your NewsBlur: an MCP server that lets AI agents read your feeds, manage stories, and train classifiers on your behalf, and a command-line tool that puts your entire NewsBlur in your terminal. One is for your AI. The other is for you. Both use the same 22 operations, and both work right now.</p>
+
+<p>MCP (Model Context Protocol) is an open standard that lets AI agents connect to external tools and data. With the NewsBlur MCP server, Claude, Codex, Cursor, Windsurf, and any other MCP-compatible agent can read your feeds, manage your stories, train your classifiers, and organize your subscriptions.</p>
+
+<!-- SCREENSHOT: Claude Code or Claude Desktop showing a conversation where the agent reads NewsBlur feeds and summarizes stories -->
+<p><img src="/assets/mcp-server-claude-conversation.png" style="width: 100%;border: 1px solid rgba(0,0,0,0.1);margin: 24px auto;display: block;" /></p>
+
+<h3 id="22-tools-for-your-agent">22 tools for your agent</h3>
+
+<p>The MCP server exposes 22 tools that cover everything you do in NewsBlur:</p>
+
+<p><strong>Reading</strong> — List feeds and folders with unread counts. Load stories from any feed, folder, or all subscriptions at once. Filter by unread, focus, or starred. Search across your entire archive with full-text search. Pull the original article text from the source. Get your AI daily briefing. Browse stories from your rarely-publishing infrequent feeds.</p>
+
+<p><strong>Actions</strong> — Mark stories as read by hash, by feed, or by folder. Save stories with tags, notes, and highlights. Subscribe and unsubscribe. Move feeds between folders. Rename feeds and folders. Share stories to your Blurblog.</p>
+
+<p><strong>Intelligence</strong> — View your trained classifiers across all feeds. Train new likes and dislikes by author, tag, title, or text content. The full range of training levels is available, including the new super dislike that overrides all other positive scores.</p>
+
+<p><strong>Discovery</strong> — Search for new feeds by topic. Find feeds similar to ones you already follow. Browse trending feeds.</p>
+
+<!-- SCREENSHOT: The MCP feature page on newsblur.com showing the 22 tools grid -->
+<p><img src="/assets/mcp-server-tools-grid.png" style="width: 90%;border: 1px solid rgba(0,0,0,0.1);margin: 24px auto;display: block;" /></p>
+
+<h3 id="what-this-looks-like-in-practice">What this looks like in practice</h3>
+
+<p>You ask your agent: “What are my infrequent stories today?” It calls <code class="language-plaintext highlighter-rouge">newsblur_get_infrequent_stories</code> and comes back with a summary of the stories from your low-volume feeds, the ones that publish once a week and are easy to miss in a busy river.</p>
+
+<p>You say: “Save that Stratechery article and tag it ai, investing.” The agent calls <code class="language-plaintext highlighter-rouge">newsblur_save_story</code> with the right story hash and tags. Done.</p>
+
+<p>You ask: “What have I saved about climate policy this month?” It searches your saved stories and gives you a summary you can actually work with.</p>
+
+<p>The agent knows your feeds, your folders, your classifiers, your saved stories. It’s working with your actual NewsBlur data, not guessing.</p>
+
+<h3 id="connect-in-one-command">Connect in one command</h3>
+
+<p>For Claude Code:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>claude mcp add --transport http newsblur https://newsblur.com/mcp/
+</code></pre></div></div>
+
+<p>For Claude Desktop, add this to your <code class="language-plaintext highlighter-rouge">claude_desktop_config.json</code>:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"newsblur"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"http"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://newsblur.com/mcp/"</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Codex, Cursor, and Windsurf each have their own config format. Setup instructions for all of them are on the <a href="https://newsblur.com/features/mcp">MCP Server feature page</a>.</p>
+
+<p>On first use, a browser window opens for you to log in and authorize access. Authentication uses OAuth 2.0, the same standard used by third-party apps. Your credentials are never stored on the MCP server, and you can revoke access at any time from your account settings.</p>
+
+<h3 id="command-line-interface">Command-line interface</h3>
+
+<p>Everything the MCP server can do is also available from your terminal. Full documentation is on the <a href="https://newsblur.com/features/cli">CLI feature page</a>. Install with pip:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>uv pip install newsblur-cli
+</code></pre></div></div>
+
+<p>Then log in and start using it:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>newsblur auth login
+</code></pre></div></div>
+
+<p><strong>Read stories</strong> from feeds, folders, or everything at once:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>newsblur stories list                          <span class="c"># unread stories</span>
+newsblur stories list <span class="nt">--folder</span> Tech <span class="nt">--limit</span> 5  <span class="c"># filter by folder</span>
+newsblur stories search <span class="s2">"machine learning"</span>     <span class="c"># full-text search</span>
+newsblur stories saved <span class="nt">--tag</span> research          <span class="c"># saved stories by tag</span>
+newsblur stories infrequent                    <span class="c"># rarely-publishing feeds</span>
+newsblur stories original 123:abc456           <span class="c"># fetch full article text</span>
+</code></pre></div></div>
+
+<p><strong>Get your daily briefing</strong> with AI-curated summaries:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>newsblur briefing                              <span class="c"># today's briefing</span>
+newsblur briefing <span class="nt">--limit</span> 1                    <span class="c"># just the latest</span>
+newsblur briefing <span class="nt">--json</span>                       <span class="c"># structured output</span>
+</code></pre></div></div>
+
+<p><strong>Manage feeds and folders:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>newsblur feeds list                            <span class="c"># all subscriptions</span>
+newsblur feeds folders                         <span class="c"># folder tree with counts</span>
+newsblur feeds add https://example.com         <span class="c"># subscribe</span>
+newsblur feeds add https://blog.com <span class="nt">-f</span> Tech    <span class="c"># subscribe into a folder</span>
+newsblur feeds remove 42                       <span class="c"># unsubscribe</span>
+newsblur feeds organize move_feed <span class="nt">--feed-id</span> 42 <span class="nt">--from</span> News <span class="nt">--to</span> Tech
+</code></pre></div></div>
+
+<p><strong>Take actions on stories:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>newsblur save 123:abc <span class="nt">--tag</span> ai <span class="nt">--tag</span> research  <span class="c"># save with tags</span>
+newsblur unsave 123:abc                        <span class="c"># remove from saved</span>
+newsblur <span class="nb">read</span> <span class="nt">--feed</span> 42                        <span class="c"># mark feed as read</span>
+newsblur share 123:abc <span class="nt">--comment</span> <span class="s2">"Worth reading"</span>
+</code></pre></div></div>
+
+<p><strong>Train your intelligence classifiers:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>newsblur train show <span class="nt">--feed</span> 42                  <span class="c"># view current training</span>
+newsblur train like <span class="nt">--feed</span> 42 <span class="nt">--author</span> <span class="s2">"Name"</span>  <span class="c"># train a like</span>
+newsblur train dislike <span class="nt">--feed</span> 42 <span class="nt">--tag</span> sponsor <span class="c"># train a dislike</span>
+</code></pre></div></div>
+
+<p><strong>Discover new feeds:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>newsblur discover search <span class="s2">"machine learning"</span>    <span class="c"># search by topic</span>
+newsblur discover similar <span class="nt">--feed</span> 42            <span class="c"># find similar feeds</span>
+newsblur discover trending                     <span class="c"># trending feeds</span>
+</code></pre></div></div>
+
+<p>Every command supports <code class="language-plaintext highlighter-rouge">--json</code> for structured output you can pipe to jq or use in scripts, and <code class="language-plaintext highlighter-rouge">--raw</code> for unformatted text. There’s also a global <code class="language-plaintext highlighter-rouge">--server</code> flag for self-hosted NewsBlur instances:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>newsblur <span class="nt">--server</span> https://my-newsblur.example.com auth login
+newsblur briefing <span class="nt">--json</span> | jq <span class="s1">'.items[0].section_summaries'</span>
+</code></pre></div></div>
+
+<!-- SCREENSHOT: Terminal showing newsblur CLI output, maybe `newsblur stories list` with formatted story output -->
+<p><img src="/assets/mcp-server-cli-output.png" style="width: 90%;border: 1px solid rgba(0,0,0,0.1);margin: 24px auto;display: block;" /></p>
+
+<h3 id="readonly-mode">Readonly mode</h3>
+
+<p>Giving an AI agent access to your NewsBlur is powerful, but maybe you want to start with guardrails. The CLI has a readonly mode that blocks all write operations: no saving, no sharing, no training, no subscribing, no marking as read. Your agent can read your feeds and search your stories, but it cannot change anything.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>newsblur auth <span class="nb">readonly</span> <span class="nt">--on</span>
+</code></pre></div></div>
+
+<p>With readonly on, any write command returns an error instead of executing. The agent sees your data but cannot touch it.</p>
+
+<p>The important part is what happens when you turn it off. Disabling readonly mode logs you out and requires you to re-authenticate in the browser:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>newsblur auth <span class="nb">readonly</span> <span class="nt">--off</span>
+<span class="c"># "You have been logged out and must re-authenticate."</span>
+newsblur auth login
+</code></pre></div></div>
+
+<p>This is deliberate. An AI agent cannot silently toggle readonly off and start making changes. Only a human sitting at a browser can re-authorize write access. If you hand the CLI to an agent and want to be sure it stays read-only, it will.</p>
+
+<h3 id="availability">Availability</h3>
+
+<p>The MCP server and CLI are available now for <a href="https://newsblur.com/?next=premium">Premium Archive</a> and Premium Pro subscribers. Setup takes one command and one browser authorization. See the <a href="https://newsblur.com/features/mcp">MCP Server</a> and <a href="https://newsblur.com/features/cli">CLI Tool</a> feature pages for full documentation.</p>
+
+<p>If you have ideas for new tools, workflows, or improvements, please share them on the <a href="https://forum.newsblur.com">NewsBlur forum</a>.</p>
+]]>
+    </content>
+    
+    
+    
+    <category term="web" />
+    
+    
+    <summary type="html">
+      <![CDATA[NewsBlur has always had an API. Every feature in the web app, the iOS app, and the Android app runs through it. But APIs are for developers. Today I’m shipping two new ways to interact with your NewsBlur: an MCP server that lets AI agents read your feeds, manage stories,...]]>
+    </summary>
+    
+  </entry>
+  
+  <entry>
+    <title type="html">NewsBlur v14 for Android: Redesigned reading experience, Ask AI, Discover, Daily Briefing, and more</title>
+    <link href="https://blog.newsblur.com/2026/03/30/newsblur-v14-for-android/" rel="alternate" type="text/html" title="NewsBlur v14 for Android: Redesigned reading experience, Ask AI, Discover, Daily Briefing, and more" />
+    <published>2026-03-30T00:00:00-04:00</published>
+    <updated>2026-03-30T00:00:00-04:00</updated>
+    <id>https://blog.newsblur.com/2026/03/30/newsblur-v14-for-android</id>
+    <content type="html" xml:base="https://blog.newsblur.com/2026/03/30/newsblur-v14-for-android/">
+      <![CDATA[<p>A few weeks ago I shipped <a href="/2026/03/05/newsblur-v14-for-ios-and-mac/">NewsBlur v14 for iOS and Mac</a>, a major redesign of the Apple apps. Today, Android gets the same treatment. Every screen has been reworked: the feed list, the story list, the reading view, preferences, and menus. Along with the visual overhaul, several features that were previously web-only are now on Android: Ask AI, Discover Related Sites, and the Daily Briefing.</p>
+
+<p>Here’s what’s new.</p>
+
+<h3 id="ask-ai">Ask AI</h3>
+
+<p>Ask AI brings the same AI-powered Q&amp;A from the web and iOS to Android. Open any story, tap Ask AI, and ask questions about it. Summarize a long article, get background on a developing situation, or fact-check a claim. Pick your preferred AI model and keep the conversation going with follow-ups. The Ask AI sheet matches your current theme and slides up as a bottom sheet, consistent with the share and trainer dialogs.</p>
+
+<p><img src="/assets/android-14-ask-ai.png" style="width: 50%;border: 1px solid rgba(0,0,0,0.1);margin: 24px auto;display: block;" /></p>
+
+<h3 id="discover-related-sites">Discover related sites</h3>
+
+<p>Discover Related Sites lets you find new feeds related to any feed you’re already subscribed to. Tap the Discover button in the story list header bar, browse what’s available, and preview a feed before subscribing. Duplicate feeds are filtered out so you only see new options.</p>
+
+<p><img src="/assets/android-14-discover.png" style="width: 50%;border: 1px solid rgba(0,0,0,0.1);margin: 24px auto;display: block;" /></p>
+
+<h3 id="daily-briefing">Daily Briefing</h3>
+
+<p>The Daily Briefing generates a personalized summary of your news, organized into sections like Top Stories, Based on Your Interests, and Long Reads. It uses native Android story rows, so it feels like a regular feed rather than a bolted-on feature. Configure your briefing frequency, writing style, and sections from the briefing view in your sidebar.</p>
+
+<p><img src="/assets/android-14-daily-briefing.png" style="width: 50%;border: 1px solid rgba(0,0,0,0.1);margin: 24px auto;display: block;" /></p>
+
+<h3 id="sepia-theme-and-refined-dark-themes">Sepia theme and refined dark themes</h3>
+
+<p>A new Sepia theme brings warmer tones for comfortable long reading sessions. The Dark theme has been lightened to match the iOS gray/medium palette, and the Black theme now uses true absolute black backgrounds for feed and story cells, making it ideal for OLED screens.</p>
+
+<div style="display: flex; gap: 12px; justify-content: center; margin: 24px auto;">
+<img src="/assets/android-14-sepia.png" style="width: 30%;border: 1px solid rgba(0,0,0,0.1);" />
+<img src="/assets/android-14-dark.png" style="width: 30%;border: 1px solid rgba(0,0,0,0.1);" />
+<img src="/assets/android-14-black.png" style="width: 30%;border: 1px solid rgba(0,0,0,0.1);" />
+</div>
+
+<h3 id="story-list-header-bar">Story list header bar</h3>
+
+<p>The top of the story list now has a header bar with quick access to Discover, search, display options, and settings. The display and settings controls are split into separate menus so you can change the view without wading through unrelated options.</p>
+
+<p><img src="/assets/android-14-header-bar.png" style="width: 50%;border: 1px solid rgba(0,0,0,0.1);margin: 24px auto;display: block;" /></p>
+
+<h3 id="redesigned-reading-experience">Redesigned reading experience</h3>
+
+<p>The reading view has been rethought from top to bottom. Story traversal buttons are lifted above the bottom edge for easier thumb access. A new traverse bar with refined icons shows your position and unread count. Story actions are hidden until the story finishes rendering, so you never tap a button before the content is ready. Opening a story from the list now animates smoothly into the reader, and swiping back uses an interactive gesture that tracks your finger.</p>
+
+<p><img src="/assets/android-14-reader.png" style="width: 50%;border: 1px solid rgba(0,0,0,0.1);margin: 24px auto;display: block;" /></p>
+
+<h3 id="redesigned-preferences-and-menus">Redesigned preferences and menus</h3>
+
+<p>Preferences have been rebuilt as a modern settings screen with inline segments instead of separate dialog pickers. The feed list menu, reading menu, and folder menus have all been redesigned with cleaner styling and better organization. Menus now scale with your device font size, so they stay readable at any accessibility setting.</p>
+
+<p><img src="/assets/android-14-preferences.png" style="width: 50%;border: 1px solid rgba(0,0,0,0.1);margin: 24px auto;display: block;" /></p>
+
+<h3 id="premium-archive-and-pro-subscriptions">Premium Archive and Pro subscriptions</h3>
+
+<p>You can now subscribe to Premium Archive and Premium Pro directly from the Android app. An upgrade banner appears in the story list when you’re on a lower tier, showing what you’d unlock by upgrading.</p>
+
+<h3 id="everything-else">Everything else</h3>
+
+<p>Beyond the headline features, this release includes a long list of improvements and fixes.</p>
+
+<h4 id="improvements">Improvements</h4>
+
+<ul>
+  <li>Interactive swipe-back gesture in both the story list and reading view with predictive back support on Android 14+.</li>
+  <li>Feed list aligned with iOS styling, with new collapse-all and expand-all toggles.</li>
+  <li>Story header pills with compact layout and title case formatting.</li>
+  <li>Active reading time tracking per story, synced to your account.</li>
+  <li>Full text and regex classifiers for the Intelligence Trainer.</li>
+  <li>Feed search field themed to match your current theme with autofill disabled.</li>
+  <li>Sync done pill delayed until feeds actually render, so you see the update happen.</li>
+  <li>Story thumbnails enlarged for small sizes and cropping fixed.</li>
+  <li>Status banners at the top of the story list for loading and error states.</li>
+  <li>Mute Sites redesigned with upgrade card and progress bar.</li>
+  <li>Custom folder and feed icon support.</li>
+</ul>
+
+<h4 id="fixes">Fixes</h4>
+
+<ul>
+  <li>Fixed TransactionTooLargeException crash in the reading pager.</li>
+  <li>Fixed database version mismatch crash on launch.</li>
+  <li>Fixed ItemListMenuPopup crash on small and split-screen displays.</li>
+  <li>Fixed login autofill and app switching losing input.</li>
+  <li>Fixed story row thumbnail cropping.</li>
+  <li>Fixed search pill text vanishing.</li>
+  <li>Fixed story list edge back gesture interference.</li>
+  <li>Brightened story feed titles for better readability.</li>
+</ul>
+
+<p>Coming up next: v14.2 will bring story clustering to Android, so duplicate stories across your feeds get grouped together automatically, just like on the web.</p>
+
+<p>NewsBlur v14 for Android is available now on the <a href="https://play.google.com/store/apps/details?id=com.newsblur">Google Play Store</a>. If you have feedback or run into issues, I’d love to hear about it on the <a href="https://forum.newsblur.com">NewsBlur forum</a>.</p>
+]]>
+    </content>
+    
+    
+    
+    <category term="android" />
+    
+    
+    <summary type="html">
+      <![CDATA[A few weeks ago I shipped NewsBlur v14 for iOS and Mac, a major redesign of the Apple apps. Today, Android gets the same treatment. Every screen has been reworked: the feed list, the story list, the reading view, preferences, and menus. Along with the visual overhaul, several features that...]]>
+    </summary>
+    
+  </entry>
   
   <entry>
     <title type="html">Hide what you hate, track what you love: super dislikes and per-classifier notifications</title>
@@ -1626,102 +1904,6 @@ A new sound of an old instrument.
     
     <summary type="html">
       <![CDATA[The launch of the new Premium Archive subscription tier also includes the 2022 redesign. You’ll see a third dashboard layout which stretches out your dashboard rivers across the width of the screen.
-]]>
-    </summary>
-    
-  </entry>
-  
-  <entry>
-    <title type="html">New gesture-based layout for the NewsBlur iPad App</title>
-    <link href="https://blog.newsblur.com/2022/03/28/redesigned-ios-layout/" rel="alternate" type="text/html" title="New gesture-based layout for the NewsBlur iPad App" />
-    <published>2022-03-28T00:00:00-04:00</published>
-    <updated>2022-03-28T00:00:00-04:00</updated>
-    <id>https://blog.newsblur.com/2022/03/28/redesigned-ios-layout</id>
-    <content type="html" xml:base="https://blog.newsblur.com/2022/03/28/redesigned-ios-layout/">
-      <![CDATA[<p>We have a big update for you on iOS, complete with a redesigned layout engine. You’ll see this mostly on iPad, where you can now interactively swipe between panes, customize how many panes you see, and even customize where the story titles are on the screen relative to the story content.</p>
-
-<p>Let’s take a look at all of the new features, starting with the improved gesture-based layout engine for navigating between stories and feeds.</p>
-
-<p>
-    <video autoplay="autoplay" loop="true" muted="" playsinline="" width="650" style="width: 650px;border: 2px solid rgba(0,0,0,0.1);margin: 0 auto;display: block;">
-        <source src="/assets/ipad-redesigned-layout-2.mp4" type="video/mp4" />
-    </video>
-</p>
-
-<p>A whole bunch of new controls and customizations have been added to the settings menu in the story titles menu, which is where you can find these new options for 2-column/3-column/full screen view panes.</p>
-
-<p><img src="/assets/ipad-story-title-customizations.png" /></p>
-
-<p>There’s also a new homescreen widget for showing 3-6 stories on your dashboard.</p>
-
-<p><img src="/assets/ipad-widget.png" /></p>
-
-<p>You can also expect to find feature parity with Android and the web when it comes to the new image preview and content preview options for story titles.</p>
-
-<p><img src="/assets/ipad-image-preview.png" /></p>
-
-<p>You can now save stories and subscribe to feeds from other apps using the NewsBlur Share extension. This includes your saved story tags and associated counts.</p>
-
-<p><img src="/assets/iphone-share-extension.png" style="margin: 0 auto; display: block; width: 450px;" /></p>
-
-<p>This release also contains numerous improvements, subtle refinements, and assorted fixed bugs.</p>
-
-<p>If you have any ideas for how you would like to see the iPad and iPhone app improved, please post ideas to the <a href="https://forum.newsblur.com">NewsBlur Forum</a>. I’m all ears and would love to prioritize improvements or changes that create a better mobile reading experience.</p>
-]]>
-    </content>
-    
-    
-    
-    <category term="ios" />
-    
-    
-    <summary type="html">
-      <![CDATA[We have a big update for you on iOS, complete with a redesigned layout engine. You’ll see this mostly on iPad, where you can now interactively swipe between panes, customize how many panes you see, and even customize where the story titles are on the screen relative to the story...]]>
-    </summary>
-    
-  </entry>
-  
-  <entry>
-    <title type="html">Magazine view offers a new perspective</title>
-    <link href="https://blog.newsblur.com/2022/03/10/magazine-view/" rel="alternate" type="text/html" title="Magazine view offers a new perspective" />
-    <published>2022-03-10T00:00:00-05:00</published>
-    <updated>2022-03-10T00:00:00-05:00</updated>
-    <id>https://blog.newsblur.com/2022/03/10/magazine-view</id>
-    <content type="html" xml:base="https://blog.newsblur.com/2022/03/10/magazine-view/">
-      <![CDATA[<p>Here’s a nice feature that brings a new perspective to your stories. It’s called the Magazine view and features larger images, longer story content previews, and improved legibility of text.</p>
-
-<p>Take a look and see how the Magazine view shwocases stories in a new way:</p>
-
-<p><img src="/assets/magazine-light.png" style="width: 750px;border: 1px solid #A0A0A0;margin: 12px auto;" /></p>
-
-<p>The Magazine view is also customizable. By default, fonts are a bit larger in the Magazine view. You can still change font sizes as well as customize the position and size of the image preview. There is also a control for how long the story content previews are, all found inside the Style popover.</p>
-
-<p><img src="/assets/style-popover-bottom.png" style="width: 375px;border: 1px solid #A0A0A0;margin: 24px auto;display: block;" /></p>
-
-<p>And in dark mode, these customizations show how tailored you can make NewsBlur look.</p>
-
-<p><img src="/assets/magazine-dark.png" style="width: 750px;border: 1px solid #A0A0A0;margin: 12px auto;" /></p>
-
-<p>You can access the new Magazine view next to the other story title view layouts.</p>
-
-<p><img src="/assets/magazine-views.png" style="width: 450px;border: 1px solid #A0A0A0;margin: 24px auto;display: block;" /></p>
-
-<p>The Grid view also features improvements to the story content preview. New lines are now preserved in both Magazine and Grid views, so you can capture a bit of longer form stories without opening them up.</p>
-
-<p><img src="/assets/grid-dark.png" style="width: 750px;border: 1px solid #A0A0A0;margin: 12px auto;" /></p>
-
-<p>Also included are some backend changes to how YouTube videos thumbnail are found, so you should see even more image previews in your feeds.</p>
-
-]]>
-    </content>
-    
-    
-    
-    <category term="web" />
-    
-    
-    <summary type="html">
-      <![CDATA[Here’s a nice feature that brings a new perspective to your stories. It’s called the Magazine view and features larger images, longer story content previews, and improved legibility of text.
 ]]>
     </summary>
     
