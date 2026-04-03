@@ -272,7 +272,8 @@ def normalize_date_filters(date_filter_start, date_filter_end, user_timezone):
 @render_to("reader/dashboard.xhtml")
 def index(request, **kwargs):
     subdomain = get_subdomain(request)
-    if request.method == "GET" and subdomain and subdomain not in ALLOWED_SUBDOMAINS:
+    allowed_subdomains = getattr(settings, 'ALLOWED_SUBDOMAINS', ALLOWED_SUBDOMAINS)
+    if request.method == "GET" and subdomain and subdomain not in allowed_subdomains:
         username = request.subdomain or subdomain
         if "." in username:
             username = username.split(".")[0]
