@@ -37,7 +37,7 @@ class NewsBlurTokenVerifier(TokenVerifier):
     """Validates upstream Django OAuth tokens by calling NewsBlur's API."""
 
     def __init__(self, upstream_base_url: str, timeout_seconds: int = 10):
-        super().__init__(required_scopes=None)
+        super().__init__(required_scopes=["read", "write", "mcp"])
         self.upstream_base_url = upstream_base_url
         self.timeout_seconds = timeout_seconds
 
